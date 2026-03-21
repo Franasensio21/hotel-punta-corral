@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.routers import router
-from backend.config import settings
+from .routers import router, public_router
+from .config import settings
 
 app = FastAPI(
     title="Hotel System API",
@@ -15,12 +15,17 @@ app = FastAPI(
 # CORS: permite que el frontend React (puerto 5173) hable con la API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "https://lively-determination-production-7836.up.railway.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+app.include_router(public_router, prefix="/api/v1")
 app.include_router(router, prefix="/api/v1")
 
 
