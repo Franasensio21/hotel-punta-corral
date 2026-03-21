@@ -8,7 +8,7 @@ import type {
   FiltrosReserva,
 } from "./types"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://http://localhost:8000"
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 const HOTEL_ID = 1
 
 class ApiClient {
