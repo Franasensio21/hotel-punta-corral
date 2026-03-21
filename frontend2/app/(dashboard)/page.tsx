@@ -31,22 +31,22 @@ export default function DashboardPage() {
   const [tipoFilter, setTipoFilter] = useState<TipoHabitacion | "todos">("todos")
 
   useEffect(() => {
-    async function fetchData() {
-      setLoading(true)
-      try {
-        const fecha = format(selectedDate, "yyyy-MM-dd")
-        const [data, preciosData] = await Promise.all([
-          api.getDisponibilidadPorFecha(fecha),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`).then(r => r.json()),
-        ])
-        setHabitaciones(data)
-        setPrecios(preciosData)
-      } catch (e) {
-        console.error(e)
-      } finally {
-        setLoading(false)
-      }
-    }
+   async function fetchData() {
+  setLoading(true)
+  try {
+    const fecha = format(selectedDate, "yyyy-MM-dd")
+    const [data, preciosData] = await Promise.all([
+      api.getDisponibilidadPorFecha(fecha),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/precios?hotel_id=1`).then(r => r.json()),
+    ])
+    setHabitaciones(data)
+    setPrecios(Array.isArray(preciosData) ? preciosData : [])
+  } catch (e) {
+    console.error(e)
+  } finally {
+    setLoading(false)
+  }
+}
     fetchData()
   }, [selectedDate])
 
