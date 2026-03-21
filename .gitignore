@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.env
+
+# Node
+node_modules/
+.next/
+*.local
+
+# Credenciales sensibles
+email-bot/token.json
+email-bot/credentials.json
+
+# Base de datos
+*.sqlite
+*.db
