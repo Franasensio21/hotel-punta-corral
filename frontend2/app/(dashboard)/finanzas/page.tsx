@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 import { authFetch } from "@/lib/auth"
 
-const API = "http://${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1"
+const API = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api/v1"
 const HOTEL_ID = 1
 
 const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]

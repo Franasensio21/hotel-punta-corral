@@ -19,7 +19,7 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { authFetch } from "@/lib/auth"
 
-const API = "http://${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1"
+const API = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api/v1"
 const HOTEL_ID = 1
 
 interface Fichaje {

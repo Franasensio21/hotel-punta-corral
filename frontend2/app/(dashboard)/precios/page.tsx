@@ -15,7 +15,7 @@ import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { authFetch } from "@/lib/auth"
 
-const API = "http://${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1"
+const API = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api/v1"
 const HOTEL_ID = 1
 
 const TIPO_LABELS: Record<string, string> = {
