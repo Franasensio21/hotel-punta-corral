@@ -1,4 +1,4 @@
-const API = process.env.NEXT_PUBLIC_API_URL || "http://${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}"
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 const TOKEN_KEY = "hotel_token"
 const USER_KEY  = "hotel_user"
 
