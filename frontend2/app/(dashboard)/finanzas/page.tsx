@@ -244,7 +244,7 @@ export default function FinanzasPage() {
       </div>
 
       {/* Resumen */}
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-5">
         <Card style={{ borderColor: "#22c55e" }}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Ingresos estimados</CardTitle>
@@ -288,6 +288,28 @@ export default function FinanzasPage() {
             <p className="text-xs text-muted-foreground mt-1">Gastos + Sueldos</p>
           </CardContent>
         </Card>
+        {(() => {
+  const neto = ingresosMes - totalEgresos
+  const positivo = neto >= 0
+  return (
+    <Card style={{ borderColor: positivo ? "#22c55e" : "#ef4444" }}>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-sm font-medium">Resultado neto</CardTitle>
+        {positivo
+          ? <TrendingUp className="size-4 text-green-500" />
+          : <TrendingDown className="size-4 text-destructive" />}
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold" style={{ color: positivo ? "#22c55e" : "#ef4444" }}>
+          {positivo ? "+" : ""}{neto.toLocaleString("es-AR")}
+        </div>
+        <p className="text-xs text-muted-foreground mt-1">
+          {positivo ? "Ganancia del mes" : "Pérdida del mes"}
+        </p>
+      </CardContent>
+    </Card>
+  )
+})()}
       </div>
 
       {/* Gastos */}
