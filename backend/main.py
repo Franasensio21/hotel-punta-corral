@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import router, public_router
+from .routers import router
 from .config import settings
 
 app = FastAPI(
@@ -8,11 +8,10 @@ app = FastAPI(
     description="Sistema de gestión de reservas hoteleras. "
                 "Endpoint /disponibilidad/ai optimizado para consultas de IA.",
     version="1.0.0",
-    docs_url="/docs",       # Swagger UI en http://localhost:8000/docs
+    docs_url="/docs",
     redoc_url="/redoc",
 )
 
-# CORS: permite que el frontend React (puerto 5173) hable con la API
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -25,7 +24,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(public_router, prefix="/api/v1")
 app.include_router(router, prefix="/api/v1")
 
 
