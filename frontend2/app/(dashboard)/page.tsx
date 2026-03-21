@@ -37,7 +37,7 @@ export default function DashboardPage() {
         const fecha = format(selectedDate, "yyyy-MM-dd")
         const [data, preciosData] = await Promise.all([
           api.getDisponibilidadPorFecha(fecha),
-          fetch(`http://localhost:8000/api/v1/precios?hotel_id=1`).then(r => r.json()),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`).then(r => r.json()),
         ])
         setHabitaciones(data)
         setPrecios(preciosData)
