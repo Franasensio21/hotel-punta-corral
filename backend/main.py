@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import router
-from .config import settings
+from backend.routers import router
+from backend.config import settings
 
 app = FastAPI(
     title="Hotel System API",

@@ -4,7 +4,7 @@ from sqlalchemy import (
     SmallInteger, String, Text, TIMESTAMP, CheckConstraint
 )
 from sqlalchemy.orm import relationship
-from .database import Base
+from backend.database import Base
 
 
 class Hotel(Base):

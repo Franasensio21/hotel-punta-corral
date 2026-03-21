@@ -1,14 +1,14 @@
 from datetime import date
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
-from . import models, schemas, services
-from .database import get_db
-from .config import settings
-from . import auth as auth_module
-from .auth import get_current_user, require_admin
+from backend import models, schemas, services
+from backend.database import get_db
+from backend.config import settings
+from backend import auth as auth_module
+from backend.auth import get_current_user, require_admin, hash_password
 router = APIRouter()
 
 
@@ -632,7 +632,6 @@ def get_usuarios(
 @router.post("/usuarios", status_code=201, tags=["Usuarios"])
 def create_usuario(data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
     from sqlalchemy import text
-    from .auth import hash_password
     db.execute(text("""
         INSERT INTO users (hotel_id, name, email, phone, password_hash, role, categoria, fecha_ingreso)
         VALUES (:hotel_id, :name, :email, :phone, :password_hash, :role, :categoria, :fecha_ingreso)
@@ -653,7 +652,6 @@ def create_usuario(data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID),
 @router.patch("/usuarios/{user_id}", tags=["Usuarios"])
 def update_usuario(user_id: int, data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
     from sqlalchemy import text
-    from .auth import hash_password
     campos = []
     params = {"id": user_id, "hotel_id": hotel_id}
     for field in ["name", "email", "phone", "role", "categoria", "fecha_ingreso", "active"]:
