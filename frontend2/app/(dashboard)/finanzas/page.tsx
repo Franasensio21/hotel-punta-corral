@@ -1,8 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { format, getDaysInMonth, startOfMonth, endOfMonth } from "date-fns"
-import { es } from "date-fns/locale"
+import { format, getDaysInMonth } from "date-fns"
 import { Plus, Trash2, TrendingUp, TrendingDown, DollarSign, Users } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -14,8 +13,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
+import { authFetch } from "@/lib/auth"
 
-const API = "http://localhost:8000/api/v1"
+const API = "http://${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1"
 const HOTEL_ID = 1
 
 const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
@@ -31,13 +31,13 @@ interface Gasto {
 }
 
 interface SueldoCalc {
-  user_id:         number
-  name:            string
-  categoria:       string | null
-  sueldo_fijo:     number
-  sueldo_por_hora: number
+  user_id:          number
+  name:             string
+  categoria:        string | null
+  sueldo_fijo:      number
+  sueldo_por_hora:  number
   horas_trabajadas: number
-  total:           number
+  total:            number
 }
 
 export default function FinanzasPage() {
@@ -45,124 +45,137 @@ export default function FinanzasPage() {
   const [mes, setMes]   = useState(hoy.getMonth())
   const [anio, setAnio] = useState(hoy.getFullYear())
 
-  const [gastos, setGastos]         = useState<Gasto[]>([])
-  const [sueldos, setSueldos]       = useState<SueldoCalc[]>([])
-  const [loading, setLoading]       = useState(true)
-  const [modalOpen, setModalOpen]   = useState(false)
-  const [guardando, setGuardando]   = useState(false)
+  const [gastos, setGastos]           = useState<Gasto[]>([])
+  const [sueldos, setSueldos]         = useState<SueldoCalc[]>([])
+  const [loading, setLoading]         = useState(true)
+  const [modalOpen, setModalOpen]     = useState(false)
+  const [guardando, setGuardando]     = useState(false)
   const [ingresosMes, setIngresosMes] = useState(0)
   const [form, setForm] = useState({
-    fecha: format(new Date(), "yyyy-MM-dd"),
+    fecha:       format(new Date(), "yyyy-MM-dd"),
     descripcion: "",
-    monto: "",
-    categoria: "otro",
-    notas: "",
+    monto:       "",
+    categoria:   "otro",
+    notas:       "",
   })
-const [detalleOpen, setDetalleOpen] = useState(false)
-const [detalleIngresos, setDetalleIngresos] = useState<{
-  numero: string, tipo: string, noches: number, precio: number,
-  subtotal: number, es_grupo: boolean, es_single: boolean, precios?: number[]
-}[]>([])
+  const [detalleOpen, setDetalleOpen] = useState(false)
+  const [detalleIngresos, setDetalleIngresos] = useState<{
+    numero: string, tipo: string, noches: number, precio: number,
+    subtotal: number, es_grupo: boolean, es_single: boolean, precios?: number[]
+  }[]>([])
+
   useEffect(() => { fetchData() }, [mes, anio])
 
   async function fetchData() {
-  setLoading(true)
-  try {
-    const diasMes = getDaysInMonth(new Date(anio, mes))
+    setLoading(true)
+    try {
+      const diasMes = getDaysInMonth(new Date(anio, mes))
 
-    const [gastosData, sueldosData] = await Promise.all([
-      fetch(`${API}/gastos?mes=${mes + 1}&anio=${anio}&hotel_id=${HOTEL_ID}`).then(r => r.json()),
-      fetch(`${API}/sueldos?hotel_id=${HOTEL_ID}`).then(r => r.json()),
-    ])
-    setGastos(gastosData)
+      const [gastosRaw, sueldosData] = await Promise.all([
+        authFetch(`${API}/gastos?mes=${mes + 1}&anio=${anio}&hotel_id=${HOTEL_ID}`).then(r => r.json()),
+        authFetch(`${API}/sueldos?hotel_id=${HOTEL_ID}`).then(r => r.json()),
+      ])
 
-    // Calcular ingresos y fichajes día por día
-    let totalIngresosMes = 0
-    const fichajesMes: any[] = []
-    const detalleTemp: Record<string, any> = {}
-    await Promise.all(
-      Array.from({ length: diasMes }, async (_, i) => {
-        const d = format(new Date(anio, mes, i + 1), "yyyy-MM-dd")
+      // FIX 1: asegurarse de que gastosData sea siempre un array
+      const gastosData: Gasto[] = Array.isArray(gastosRaw) ? gastosRaw : (gastosRaw?.items ?? gastosRaw?.gastos ?? [])
+      setGastos(gastosData)
 
-        const [dispRes, fData] = await Promise.all([
-          fetch(`${API}/disponibilidad?fecha=${d}&hotel_id=${HOTEL_ID}`).then(r => r.json()),
-          fetch(`${API}/fichajes?fecha=${d}&hotel_id=${HOTEL_ID}`).then(r => r.json()),
-        ])
+      // Calcular ingresos y fichajes día por día
+      let totalIngresosMes = 0
+      const fichajesMes: any[] = []
+      const detalleTemp: Record<string, any> = {}
 
-const ocupadas = dispRes.habitaciones?.filter((h: any) => h.estado === "ocupada") || []
-for (const hab of ocupadas) {
-  const esGrupo  = !!hab.grupo
-  const esSingle = hab.tipo_ocupacion === "single"
+      await Promise.all(
+        Array.from({ length: diasMes }, async (_, i) => {
+          const d = format(new Date(anio, mes, i + 1), "yyyy-MM-dd")
 
-  // Si es single consultamos precio de tipo 'single', si no usamos el tipo de la habitación
-  const tipoConsulta = esSingle ? "single" : hab.tipo
+          const [dispRes, fRaw] = await Promise.all([
+            authFetch(`${API}/disponibilidad?fecha=${d}&hotel_id=${HOTEL_ID}`).then(r => r.json()),
+            authFetch(`${API}/fichajes?fecha=${d}&hotel_id=${HOTEL_ID}`).then(r => r.json()),
+          ])
 
-  const precioRes = await fetch(`${API}/precios/consulta?fecha=${d}&tipo=${tipoConsulta}&hotel_id=${HOTEL_ID}`).then(r => r.json())
+          // FIX 2: asegurarse de que fData sea siempre un array
+          const fData: any[] = Array.isArray(fRaw) ? fRaw : (fRaw?.items ?? fRaw?.fichajes ?? [])
+          fichajesMes.push(...fData)
 
-  const precio = esGrupo
-    ? (precioRes.precio_grupo ? parseFloat(precioRes.precio_grupo) : (precioRes.precio ? parseFloat(precioRes.precio) : 0))
-    : (precioRes.precio ? parseFloat(precioRes.precio) : 0)
+          const ocupadas = dispRes.habitaciones?.filter((h: any) => h.estado === "ocupada") || []
+          for (const hab of ocupadas) {
+            const esGrupo  = !!hab.grupo
+            const esSingle = hab.tipo_ocupacion === "single"
+            const tipoConsulta = esSingle ? "single" : hab.tipo
 
-if (precio > 0) {
-  totalIngresosMes += precio
-  const key = hab.numero
-  if (!detalleTemp[key]) {
-    detalleTemp[key] = {
-      numero:    hab.numero,
-      tipo:      esSingle ? "single" : hab.tipo,
-      noches:    0,
-      precios:   [] as number[],  // guardamos todos los precios
-      precio:    precio,          // precio del primer día
-      subtotal:  0,
-      es_grupo:  esGrupo,
-      es_single: esSingle,
+            const precioRes = await authFetch(
+              `${API}/precios/consulta?fecha=${d}&tipo=${tipoConsulta}&hotel_id=${HOTEL_ID}`
+            ).then(r => r.json())
+
+            const precio = esGrupo
+              ? (precioRes.precio_grupo ? parseFloat(precioRes.precio_grupo) : (precioRes.precio ? parseFloat(precioRes.precio) : 0))
+              : (precioRes.precio ? parseFloat(precioRes.precio) : 0)
+
+            if (precio > 0) {
+              totalIngresosMes += precio
+              const key = hab.numero
+              if (!detalleTemp[key]) {
+                detalleTemp[key] = {
+                  numero:    hab.numero,
+                  tipo:      esSingle ? "single" : hab.tipo,
+                  noches:    0,
+                  precios:   [] as number[],
+                  precio:    precio,
+                  subtotal:  0,
+                  es_grupo:  esGrupo,
+                  es_single: esSingle,
+                }
+              }
+              detalleTemp[key].noches   += 1
+              detalleTemp[key].subtotal += precio
+              detalleTemp[key].precios.push(precio)
+              detalleTemp[key].precio = Math.round(
+                detalleTemp[key].subtotal / detalleTemp[key].noches
+              )
+            }
+          }
+        })
+      )
+
+      setDetalleIngresos(
+        Object.values(detalleTemp).sort((a: any, b: any) => parseInt(a.numero) - parseInt(b.numero))
+      )
+      setIngresosMes(totalIngresosMes)
+
+      // Calcular horas por empleado
+      const horasPorEmpleado: Record<number, number> = {}
+      fichajesMes.forEach(f => {
+        if (!f.hora_entrada || !f.hora_salida) return
+        const [hE, mE] = f.hora_entrada.split(":").map(Number)
+        const [hS, mS] = f.hora_salida.split(":").map(Number)
+        const mins = (hS * 60 + mS) - (hE * 60 + mE)
+        if (mins > 0) horasPorEmpleado[f.user_id] = (horasPorEmpleado[f.user_id] || 0) + mins
+      })
+
+      const sueldosArray: any[] = Array.isArray(sueldosData) ? sueldosData : (sueldosData?.items ?? sueldosData?.sueldos ?? [])
+      const calcSueldos: SueldoCalc[] = sueldosArray
+        .filter((s: any) => s.activo)
+        .map((s: any) => {
+          const horas = (horasPorEmpleado[s.user_id] || 0) / 60
+          const total = s.sueldo_fijo + (horas * s.sueldo_por_hora)
+          return {
+            user_id:          s.user_id,
+            name:             s.name,
+            categoria:        s.categoria,
+            sueldo_fijo:      s.sueldo_fijo,
+            sueldo_por_hora:  s.sueldo_por_hora,
+            horas_trabajadas: Math.round(horas * 10) / 10,
+            total:            Math.round(total),
+          }
+        })
+      setSueldos(calcSueldos)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
     }
   }
-  detalleTemp[key].noches   += 1
-  detalleTemp[key].subtotal += precio
-  detalleTemp[key].precios.push(precio)
-  // Precio promedio
-  detalleTemp[key].precio = Math.round(
-    detalleTemp[key].subtotal / detalleTemp[key].noches
-  )
-}
-}
-
-        fichajesMes.push(...fData)
-      })
-    )
-setDetalleIngresos(Object.values(detalleTemp).sort((a: any, b: any) => parseInt(a.numero) - parseInt(b.numero)))
-    setIngresosMes(totalIngresosMes)
-
-    // Calcular horas por empleado
-    const horasPorEmpleado: Record<number, number> = {}
-    fichajesMes.forEach(f => {
-      if (!f.hora_entrada || !f.hora_salida) return
-      const [hE, mE] = f.hora_entrada.split(":").map(Number)
-      const [hS, mS] = f.hora_salida.split(":").map(Number)
-      const mins = (hS * 60 + mS) - (hE * 60 + mE)
-      if (mins > 0) horasPorEmpleado[f.user_id] = (horasPorEmpleado[f.user_id] || 0) + mins
-    })
-
-    const calcSueldos: SueldoCalc[] = sueldosData
-      .filter((s: any) => s.activo)
-      .map((s: any) => {
-        const horas = (horasPorEmpleado[s.user_id] || 0) / 60
-        const total = s.sueldo_fijo + (horas * s.sueldo_por_hora)
-        return {
-          user_id:          s.user_id,
-          name:             s.name,
-          categoria:        s.categoria,
-          sueldo_fijo:      s.sueldo_fijo,
-          sueldo_por_hora:  s.sueldo_por_hora,
-          horas_trabajadas: Math.round(horas * 10) / 10,
-          total:            Math.round(total),
-        }
-      })
-    setSueldos(calcSueldos)
-  } catch (e) { console.error(e) }
-  finally { setLoading(false) }
-}
 
   async function handleGuardarGasto() {
     if (!form.descripcion || !form.monto || !form.fecha) {
@@ -171,7 +184,8 @@ setDetalleIngresos(Object.values(detalleTemp).sort((a: any, b: any) => parseInt(
     }
     setGuardando(true)
     try {
-      await fetch(`${API}/gastos?hotel_id=${HOTEL_ID}`, {
+      // FIX 3: options estaban fuera del llamado a authFetch — ahora están dentro
+      await authFetch(`${API}/gastos?hotel_id=${HOTEL_ID}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -194,7 +208,8 @@ setDetalleIngresos(Object.values(detalleTemp).sort((a: any, b: any) => parseInt(
   }
 
   async function handleEliminarGasto(id: number) {
-    await fetch(`${API}/gastos/${id}?hotel_id=${HOTEL_ID}`, { method: "DELETE" })
+    // FIX 4: igual que arriba, options estaban fuera del llamado
+    await authFetch(`${API}/gastos/${id}?hotel_id=${HOTEL_ID}`, { method: "DELETE" })
     toast.success("Gasto eliminado")
     fetchData()
   }
@@ -231,20 +246,20 @@ setDetalleIngresos(Object.values(detalleTemp).sort((a: any, b: any) => parseInt(
       {/* Resumen */}
       <div className="grid gap-4 sm:grid-cols-4">
         <Card style={{ borderColor: "#22c55e" }}>
-  <CardHeader className="flex flex-row items-center justify-between pb-2">
-    <CardTitle className="text-sm font-medium">Ingresos estimados</CardTitle>
-    <div className="flex items-center gap-2">
-      <Button variant="outline" size="sm" onClick={() => setDetalleOpen(true)}>
-        Ver detalle
-      </Button>
-      <TrendingUp className="size-4 text-green-500" />
-    </div>
-  </CardHeader>
-  <CardContent>
-    <div className="text-2xl font-bold text-green-600">${ingresosMes.toLocaleString("es-AR")}</div>
-    <p className="text-xs text-muted-foreground mt-1">Basado en precios cargados</p>
-  </CardContent>
-</Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Ingresos estimados</CardTitle>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setDetalleOpen(true)}>
+                Ver detalle
+              </Button>
+              <TrendingUp className="size-4 text-green-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">${ingresosMes.toLocaleString("es-AR")}</div>
+            <p className="text-xs text-muted-foreground mt-1">Basado en precios cargados</p>
+          </CardContent>
+        </Card>
         <Card style={{ borderColor: "#ef4444" }}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total gastos</CardTitle>
@@ -417,48 +432,51 @@ setDetalleIngresos(Object.values(detalleTemp).sort((a: any, b: any) => parseInt(
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal detalle ingresos */}
       <Dialog open={detalleOpen} onOpenChange={setDetalleOpen}>
-  <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
-    <DialogHeader>
-      <DialogTitle>Detalle de ingresos — {MESES[mes]} {anio}</DialogTitle>
-    </DialogHeader>
-    <div className="overflow-y-auto flex-1"></div>
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Hab.</TableHead>
-          <TableHead>Tipo</TableHead>
-          <TableHead>Noches</TableHead>
-          <TableHead>Precio/noche</TableHead>
-          <TableHead>reserva</TableHead>
-          <TableHead>Subtotal</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {detalleIngresos.map(d => (
-          <TableRow key={d.numero}>
-            <TableCell className="font-bold">{d.numero}</TableCell>
-            <TableCell className="capitalize">{d.tipo}</TableCell>
-            <TableCell>{d.noches}</TableCell>
-            <TableCell>${d.precio.toLocaleString("es-AR")}</TableCell>
-            <TableCell>
-              {d.es_grupo
-                ? <Badge style={{ backgroundColor: "#facc15", color: "#1a1a1a" }}>Grupo</Badge>
-                : d.es_single
-                ? <Badge style={{ backgroundColor: "#f59e0b", color: "#fff" }}>Single</Badge>
-                : <Badge variant="outline">Individual</Badge>}
-            </TableCell>
-            <TableCell className="font-semibold text-green-600">${d.subtotal.toLocaleString("es-AR")}</TableCell>
-      </TableRow>
-    ))}
-        <TableRow>
-          <TableCell colSpan={4} className="font-bold text-right">Total</TableCell>
-          <TableCell className="font-bold text-green-600">${ingresosMes.toLocaleString("es-AR")}</TableCell>
-        </TableRow>
-      </TableBody>
-    </Table>
-  </DialogContent>
-</Dialog>
+        <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Detalle de ingresos — {MESES[mes]} {anio}</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto flex-1">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Hab.</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Noches</TableHead>
+                  <TableHead>Precio/noche</TableHead>
+                  <TableHead>Reserva</TableHead>
+                  <TableHead>Subtotal</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {detalleIngresos.map(d => (
+                  <TableRow key={d.numero}>
+                    <TableCell className="font-bold">{d.numero}</TableCell>
+                    <TableCell className="capitalize">{d.tipo}</TableCell>
+                    <TableCell>{d.noches}</TableCell>
+                    <TableCell>${d.precio.toLocaleString("es-AR")}</TableCell>
+                    <TableCell>
+                      {d.es_grupo
+                        ? <Badge style={{ backgroundColor: "#facc15", color: "#1a1a1a" }}>Grupo</Badge>
+                        : d.es_single
+                        ? <Badge style={{ backgroundColor: "#f59e0b", color: "#fff" }}>Single</Badge>
+                        : <Badge variant="outline">Individual</Badge>}
+                    </TableCell>
+                    <TableCell className="font-semibold text-green-600">${d.subtotal.toLocaleString("es-AR")}</TableCell>
+                  </TableRow>
+                ))}
+                <TableRow>
+                  <TableCell colSpan={5} className="font-bold text-right">Total</TableCell>
+                  <TableCell className="font-bold text-green-600">${ingresosMes.toLocaleString("es-AR")}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

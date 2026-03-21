@@ -8,8 +8,9 @@ import { toast } from "sonner"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { authFetch } from "@/lib/auth"
 
-const API = "http://localhost:8000/api/v1"
+const API = "http://${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1"
 const HOTEL_ID = 1
 
 const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
@@ -82,8 +83,8 @@ export default function GrillaPage() {
     setLoading(true)
     try {
       const [habData, reservasData] = await Promise.all([
-        fetch(`${API}/habitaciones?hotel_id=${HOTEL_ID}`).then(r => r.json()),
-        fetch(`${API}/reservas?hotel_id=${HOTEL_ID}`).then(r => r.json()),
+        authFetch(`${API}/habitaciones?hotel_id=${HOTEL_ID}`).then(r => r.json()),
+        authFetch(`${API}/reservas?hotel_id=${HOTEL_ID}`).then(r => r.json()),
       ])
 
       const habs: Habitacion[] = habData
@@ -136,7 +137,7 @@ export default function GrillaPage() {
 
     setGuardando(true)
     try {
-      const res = await fetch(`${API}/reservar?hotel_id=${HOTEL_ID}`, {
+      const res = await authFetch(`${API}/reservar?hotel_id=${HOTEL_ID}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -206,7 +207,7 @@ export default function GrillaPage() {
   const handleCancelReserva = async () => {
   if (!cancelando) return
   try {
-    await fetch(`${API}/reservas/${cancelando.reservaId}?hotel_id=${HOTEL_ID}`, { method: "DELETE" })
+    await authFetch(`${API}/reservas/${cancelando.reservaId}?hotel_id=${HOTEL_ID}`, { method: "DELETE" })
     toast.success("Reserva cancelada")
     setCancelando(null)
     await fetchData()

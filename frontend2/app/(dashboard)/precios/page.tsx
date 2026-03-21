@@ -13,8 +13,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
+import { authFetch } from "@/lib/auth"
 
-const API = "http://localhost:8000/api/v1"
+const API = "http://${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1"
 const HOTEL_ID = 1
 
 const TIPO_LABELS: Record<string, string> = {
@@ -50,7 +51,7 @@ export default function PreciosPage() {
   async function fetchPrecios() {
     setLoading(true)
     try {
-      const res = await fetch(`${API}/precios?hotel_id=${HOTEL_ID}`)
+      const res = await authFetch(`${API}/precios?hotel_id=${HOTEL_ID}`)
       const data = await res.json()
       setPrecios(data)
     } catch {
@@ -71,7 +72,7 @@ export default function PreciosPage() {
     }
     setGuardando(true)
     try {
-      const res = await fetch(`${API}/precios?hotel_id=${HOTEL_ID}`, {
+      const res = await authFetch(`${API}/precios?hotel_id=${HOTEL_ID}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -96,7 +97,7 @@ export default function PreciosPage() {
   async function handleEliminar() {
     if (!eliminar) return
     try {
-      await fetch(`${API}/precios/${eliminar.id}?hotel_id=${HOTEL_ID}`, { method: "DELETE" })
+      await authFetch(`${API}/precios/${eliminar.id}?hotel_id=${HOTEL_ID}`, { method: "DELETE" })
       toast.success("Precio eliminado")
       fetchPrecios()
     } catch {

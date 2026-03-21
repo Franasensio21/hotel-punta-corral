@@ -13,8 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { toast } from "sonner"
+import { authFetch } from "@/lib/auth"
 
-const API = "http://localhost:8000/api/v1"
+const API = "http://${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1"
 const HOTEL_ID = 1
 
 const TIPO_LABELS: Record<string, string> = {
@@ -74,7 +75,7 @@ export default function RecepcionistaPage() {
   async function fetchIngresos() {
     setLoading(true)
     try {
-      const res = await fetch(`${API}/disponibilidad?fecha=${hoyStr}&hotel_id=${HOTEL_ID}`)
+      const res = await authFetch(`${API}/disponibilidad?fecha=${hoyStr}&hotel_id=${HOTEL_ID}`)
       const data = await res.json()
       const ocupadas = data.habitaciones.filter((h: any) => h.estado === "ocupada")
       setIngresos(ocupadas)
@@ -90,8 +91,8 @@ export default function RecepcionistaPage() {
     // Cargar habitaciones libres hoy y clientes
     try {
       const [resHab, resClientes] = await Promise.all([
-        fetch(`${API}/disponibilidad?fecha=${hoyStr}&hotel_id=${HOTEL_ID}`).then(r => r.json()),
-        fetch(`${API}/clientes?hotel_id=${HOTEL_ID}`).then(r => r.json()),
+        authFetch(`${API}/disponibilidad?fecha=${hoyStr}&hotel_id=${HOTEL_ID}`).then(r => r.json()),
+        authFetch(`${API}/clientes?hotel_id=${HOTEL_ID}`).then(r => r.json()),
       ])
       setHabitaciones(resHab.habitaciones.filter((h: any) => h.estado === "libre"))
       setClientes(resClientes.map((c: any) => ({
@@ -119,7 +120,7 @@ export default function RecepcionistaPage() {
 
       // Si es nuevo cliente, crearlo
       if (!clienteId && nuevoNombre.trim()) {
-        const res = await fetch(`${API}/clientes?hotel_id=${HOTEL_ID}`, {
+        const res = await authFetch(`${API}/clientes?hotel_id=${HOTEL_ID}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: nuevoNombre.trim(), email: null, phone: null }),
@@ -128,7 +129,7 @@ export default function RecepcionistaPage() {
         guestId = nuevo.id
       }
 
-      await fetch(`${API}/reservar?hotel_id=${HOTEL_ID}`, {
+      await authFetch(`${API}/reservar?hotel_id=${HOTEL_ID}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

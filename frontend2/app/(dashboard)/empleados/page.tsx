@@ -14,8 +14,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
+import { authFetch } from "@/lib/auth"
 
-const API = "http://localhost:8000/api/v1"
+const API = "http://${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1"
 const HOTEL_ID = 1
 
 const CATEGORIAS = ["recepcionista", "mucama", "mozo", "mantenimiento", "administrador", "otro"]
@@ -60,8 +61,8 @@ export default function EmpleadosPage() {
     setLoading(true)
     try {
       const [empData, sueldoData] = await Promise.all([
-        fetch(`${API}/usuarios?hotel_id=${HOTEL_ID}`).then(r => r.json()),
-        fetch(`${API}/sueldos?hotel_id=${HOTEL_ID}`).then(r => r.json()),
+        authFetch(`${API}/usuarios?hotel_id=${HOTEL_ID}`).then(r => r.json()),
+        authFetch(`${API}/sueldos?hotel_id=${HOTEL_ID}`).then(r => r.json()),
       ])
       setEmpleados(empData)
       setSueldos(sueldoData)
@@ -121,14 +122,14 @@ export default function EmpleadosPage() {
       if (form.password) body.password = form.password
 
       if (editando) {
-        await fetch(`${API}/usuarios/${editando.id}?hotel_id=${HOTEL_ID}`, {
+        await authFetch(`${API}/usuarios/${editando.id}?hotel_id=${HOTEL_ID}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         })
         toast.success("Empleado actualizado")
       } else {
-        await fetch(`${API}/usuarios?hotel_id=${HOTEL_ID}`, {
+        await authFetch(`${API}/usuarios?hotel_id=${HOTEL_ID}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
@@ -145,7 +146,7 @@ export default function EmpleadosPage() {
   }
 
   async function handleToggleActivo(emp: Empleado) {
-    await fetch(`${API}/usuarios/${emp.id}?hotel_id=${HOTEL_ID}`, {
+    await authFetch(`${API}/usuarios/${emp.id}?hotel_id=${HOTEL_ID}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ active: !emp.active }),
@@ -158,7 +159,7 @@ export default function EmpleadosPage() {
     if (!empleadoSueldo) return
     setGuardando(true)
     try {
-      await fetch(`${API}/sueldos?hotel_id=${HOTEL_ID}`, {
+      await authFetch(`${API}/sueldos?hotel_id=${HOTEL_ID}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

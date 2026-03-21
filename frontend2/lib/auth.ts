@@ -1,4 +1,4 @@
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+const API = process.env.NEXT_PUBLIC_API_URL || "http://${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}"
 const TOKEN_KEY = "hotel_token"
 const USER_KEY  = "hotel_user"
 
@@ -64,4 +64,19 @@ export function getUser(): User | null {
 
 export function isAuthenticated(): boolean {
   return !!getToken()
+}
+
+
+export function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const token = typeof window !== "undefined" ? localStorage.getItem("hotel_token") : null
+  const { headers: extraHeaders, ...restOptions } = options
+  return fetch(url, {
+    ...restOptions,
+    headers: {
+      "Content-Type": "application/json",
+      ...(extraHeaders as Record<string, string> || {}),
+      // El token va al final para que NUNCA sea pisado
+      ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+    },
+  })
 }

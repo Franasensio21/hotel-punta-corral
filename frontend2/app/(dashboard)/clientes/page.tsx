@@ -29,6 +29,7 @@ import { api } from "@/lib/api"
 import type { Cliente, ClienteForm, OrigenCliente } from "@/lib/types"
 import { toast } from "sonner"
 
+
 // Datos mock para desarrollo
 const mockClientes: Cliente[] = [
   { id: 1, nombre: "Juan", apellido: "Pérez", dni: "12345678", telefono: "+54 11 1234-5678", email: "juan@email.com", origen: "nacional", created_at: "", updated_at: "" },

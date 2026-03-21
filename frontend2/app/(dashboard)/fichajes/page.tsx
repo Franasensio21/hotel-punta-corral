@@ -17,8 +17,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { authFetch } from "@/lib/auth"
 
-const API = "http://localhost:8000/api/v1"
+const API = "http://${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1"
 const HOTEL_ID = 1
 
 interface Fichaje {
@@ -73,8 +74,8 @@ export default function FichajesPage() {
     try {
       const fechaStr = format(fecha, "yyyy-MM-dd")
       const [fichajesData, empData] = await Promise.all([
-        fetch(`${API}/fichajes?fecha=${fechaStr}&hotel_id=${HOTEL_ID}`).then(r => r.json()),
-        fetch(`${API}/usuarios?hotel_id=${HOTEL_ID}`).then(r => r.json()),
+        authFetch(`${API}/fichajes?fecha=${fechaStr}&hotel_id=${HOTEL_ID}`).then(r => r.json()),
+        authFetch(`${API}/usuarios?hotel_id=${HOTEL_ID}`).then(r => r.json()),
       ])
       setFichajes(fichajesData)
       setEmpleados(empData.filter((e: Empleado) => e.active))
@@ -108,7 +109,7 @@ export default function FichajesPage() {
     try {
       const fechaStr = format(fecha, "yyyy-MM-dd")
       if (editando) {
-        await fetch(`${API}/fichajes/${editando.id}?hotel_id=${HOTEL_ID}`, {
+        await authFetch(`${API}/fichajes/${editando.id}?hotel_id=${HOTEL_ID}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -119,7 +120,7 @@ export default function FichajesPage() {
         })
         toast.success("Fichaje actualizado")
       } else {
-        await fetch(`${API}/fichajes?hotel_id=${HOTEL_ID}`, {
+        await authFetch(`${API}/fichajes?hotel_id=${HOTEL_ID}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

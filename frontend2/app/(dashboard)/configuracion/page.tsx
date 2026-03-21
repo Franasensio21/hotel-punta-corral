@@ -13,8 +13,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
+import { authFetch } from "@/lib/auth"
 
-const API = "http://localhost:8000/api/v1"
+const API = "http://${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1"
 const HOTEL_ID = 1
 
 const TIPO_LABELS: Record<string, string> = {
@@ -69,9 +70,9 @@ export default function ConfiguracionPage() {
     setLoading(true)
     try {
       const [configData, overridesData, habData] = await Promise.all([
-        fetch(`${API}/configuracion?hotel_id=${HOTEL_ID}`).then(r => r.json()),
-        fetch(`${API}/habitaciones/overrides?hotel_id=${HOTEL_ID}`).then(r => r.json()),
-        fetch(`${API}/habitaciones?hotel_id=${HOTEL_ID}`).then(r => r.json()),
+        authFetch(`${API}/configuracion?hotel_id=${HOTEL_ID}`).then(r => r.json()),
+        authFetch(`${API}/habitaciones/overrides?hotel_id=${HOTEL_ID}`).then(r => r.json()),
+        authFetch(`${API}/habitaciones?hotel_id=${HOTEL_ID}`).then(r => r.json()),
       ])
       const umbral = configData.find((c: any) => c.clave === "umbral_grupo")
       if (umbral) { setUmbralGrupo(umbral.valor); setUmbralEdit(umbral.valor) }
@@ -83,7 +84,7 @@ export default function ConfiguracionPage() {
 
   async function handleGuardarUmbral() {
     try {
-      await fetch(`${API}/configuracion/umbral_grupo?hotel_id=${HOTEL_ID}`, {
+      await authFetch(`${API}/configuracion/umbral_grupo?hotel_id=${HOTEL_ID}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ valor: umbralEdit }),
@@ -102,7 +103,7 @@ export default function ConfiguracionPage() {
     }
     setGuardando(true)
     try {
-      await fetch(`${API}/habitaciones/overrides?hotel_id=${HOTEL_ID}`, {
+      await authFetch(`${API}/habitaciones/overrides?hotel_id=${HOTEL_ID}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -127,7 +128,7 @@ export default function ConfiguracionPage() {
   }
 
   async function handleEliminarOverride(id: number) {
-    await fetch(`${API}/habitaciones/overrides/${id}?hotel_id=${HOTEL_ID}`, { method: "DELETE" })
+    await authFetch(`${API}/habitaciones/overrides/${id}?hotel_id=${HOTEL_ID}`, { method: "DELETE" })
     toast.success("Override eliminado")
     fetchData()
   }

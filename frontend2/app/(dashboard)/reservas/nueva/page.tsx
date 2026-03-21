@@ -19,6 +19,7 @@ import { api } from "@/lib/api"
 import type { Cliente, HabitacionDisponible, ReservaForm } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { authFetch } from "@/lib/auth"
 
 const TIPO_LABELS: Record<string, string> = {
   double: "Doble", triple: "Triple", quad: "Cuádruple", quintuple: "Quíntuple",
@@ -113,7 +114,7 @@ export default function NuevaReservaPage() {
         tipo_ocupacion: tipoOcupacion,
       }
 
-      const res = await fetch(`http://localhost:8000/api/v1/reservar?hotel_id=1`, {
+      const res = await authFetch(`http://${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/reservar?hotel_id=1`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),

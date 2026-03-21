@@ -7,8 +7,9 @@ import { LogIn, LogOut, BedDouble } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { authFetch } from "@/lib/auth"
 
-const API = "http://localhost:8000/api/v1"
+const API = "http://${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1"
 const HOTEL_ID = 1
 
 const TIPO_LABELS: Record<string, string> = {
@@ -44,8 +45,8 @@ export default function MucamaPage() {
       try {
         // Traemos disponibilidad de hoy y mañana para detectar movimientos
         const [resAyer, resHoy] = await Promise.all([
-  fetch(`${API}/disponibilidad?fecha=${format(ayer, "yyyy-MM-dd")}&hotel_id=${HOTEL_ID}`).then(r => r.json()),
-  fetch(`${API}/disponibilidad?fecha=${format(hoy, "yyyy-MM-dd")}&hotel_id=${HOTEL_ID}`).then(r => r.json()),
+  authFetch(`${API}/disponibilidad?fecha=${format(ayer, "yyyy-MM-dd")}&hotel_id=${HOTEL_ID}`).then(r => r.json()),
+  authFetch(`${API}/disponibilidad?fecha=${format(hoy, "yyyy-MM-dd")}&hotel_id=${HOTEL_ID}`).then(r => r.json()),
 ])
 
 const habAyer = resAyer.habitaciones as Habitacion[]

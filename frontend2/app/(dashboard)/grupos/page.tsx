@@ -15,8 +15,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { authFetch } from "@/lib/auth"
 
-const API = "http://localhost:8000/api/v1"
+const API = "http://${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1"
 const HOTEL_ID = 1
 
 const TIPO_LABELS: Record<string, string> = {
@@ -91,7 +92,7 @@ export default function GruposPage() {
   async function fetchGrupos() {
     setLoading(true)
     try {
-      const data = await fetch(`${API}/grupos?hotel_id=${HOTEL_ID}`).then(r => r.json())
+      const data = await authFetch(`${API}/grupos?hotel_id=${HOTEL_ID}`).then(r => r.json())
       setGrupos(Array.isArray(data) ? data : [])
     } catch (e) { console.error(e) }
     finally { setLoading(false) }
@@ -106,9 +107,9 @@ export default function GruposPage() {
   async function fetchHabsGrupo(grupo: Grupo) {
   try {
     const [habsData, rangoData, reservasData] = await Promise.all([
-      fetch(`${API}/grupos/${grupo.id}/habitaciones?hotel_id=${HOTEL_ID}`).then(r => r.json()),
-      fetch(`${API}/disponibilidad/rango?check_in=${grupo.arrival_date}&check_out=${grupo.departure_date}&hotel_id=${HOTEL_ID}`).then(r => r.json()),
-      fetch(`${API}/reservas?hotel_id=${HOTEL_ID}`).then(r => r.json()),
+      authFetch(`${API}/grupos/${grupo.id}/habitaciones?hotel_id=${HOTEL_ID}`).then(r => r.json()),
+      authFetch(`${API}/disponibilidad/rango?check_in=${grupo.arrival_date}&check_out=${grupo.departure_date}&hotel_id=${HOTEL_ID}`).then(r => r.json()),
+      authFetch(`${API}/reservas?hotel_id=${HOTEL_ID}`).then(r => r.json()),
     ])
     setHabsGrupo(Array.isArray(habsData) ? habsData : [])
 
@@ -116,7 +117,7 @@ export default function GruposPage() {
     const libresIds = new Set((rangoData?.habitaciones || []).map((h: any) => h.id))
 
     // Traer todas las habitaciones para mostrar también las ocupadas
-    const todasRes = await fetch(`${API}/habitaciones?hotel_id=${HOTEL_ID}`).then(r => r.json())
+    const todasRes = await authFetch(`${API}/habitaciones?hotel_id=${HOTEL_ID}`).then(r => r.json())
 
     const habs: Hab[] = todasRes.map((h: any) => {
       const libre = libresIds.has(h.id)
@@ -182,12 +183,12 @@ export default function GruposPage() {
         status:         form.status,
       }
       if (editando) {
-        await fetch(`${API}/grupos/${editando.id}?hotel_id=${HOTEL_ID}`, {
+        await authFetch(`${API}/grupos/${editando.id}?hotel_id=${HOTEL_ID}`, {
           method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
         })
         toast.success("Grupo actualizado")
       } else {
-        await fetch(`${API}/grupos?hotel_id=${HOTEL_ID}`, {
+        await authFetch(`${API}/grupos?hotel_id=${HOTEL_ID}`, {
           method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
         })
         toast.success("Grupo creado")
@@ -210,7 +211,7 @@ export default function GruposPage() {
       return
     }
     try {
-      const res = await fetch(`${API}/grupos/${grupoActivo.id}/habitaciones?hotel_id=${HOTEL_ID}`, {
+      const res = await authFetch(`${API}/grupos/${grupoActivo.id}/habitaciones?hotel_id=${HOTEL_ID}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ room_id: roomId }),
@@ -229,7 +230,7 @@ export default function GruposPage() {
   async function handleDesasignarHab(reservaId: number) {
     if (!grupoActivo) return
     try {
-      await fetch(`${API}/grupos/${grupoActivo.id}/habitaciones/${reservaId}?hotel_id=${HOTEL_ID}`, { method: "DELETE" })
+      await authFetch(`${API}/grupos/${grupoActivo.id}/habitaciones/${reservaId}?hotel_id=${HOTEL_ID}`, { method: "DELETE" })
       toast.success("Habitación removida")
       await fetchHabsGrupo(grupoActivo)
       fetchGrupos()
@@ -240,7 +241,7 @@ export default function GruposPage() {
     if (!habOcupada || !grupoActivo) return
     try {
       // Mover la reserva existente a la habitación destino
-      const res = await fetch(`${API}/reservas/${habOcupada.reserva_id}/mover?hotel_id=${HOTEL_ID}`, {
+      const res = await authFetch(`${API}/reservas/${habOcupada.reserva_id}/mover?hotel_id=${HOTEL_ID}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ room_id_destino: roomIdDestino }),
@@ -261,7 +262,7 @@ export default function GruposPage() {
   async function handleBorrarGrupo() {
   if (!borrarGrupo) return
   try {
-    await fetch(`${API}/grupos/${borrarGrupo.id}?hotel_id=${HOTEL_ID}`, { method: "DELETE" })
+    await authFetch(`${API}/grupos/${borrarGrupo.id}?hotel_id=${HOTEL_ID}`, { method: "DELETE" })
     toast.success("Grupo eliminado")
     setBorrarGrupo(null)
     fetchGrupos()

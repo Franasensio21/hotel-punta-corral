@@ -12,8 +12,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
+import { authFetch } from "@/lib/auth"
 
-const API = "http://localhost:8000/api/v1"
+const API = "http://${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1"
 const HOTEL_ID = 1
 
 const TIPO_LABELS: Record<string, string> = {
@@ -58,7 +59,7 @@ export default function HabitacionesPage() {
   async function fetchData() {
     setLoading(true)
     try {
-      const data = await fetch(`${API}/habitaciones?hotel_id=${HOTEL_ID}`).then(r => r.json())
+      const data = await authFetch(`${API}/habitaciones?hotel_id=${HOTEL_ID}`).then(r => r.json())
       const sorted = data.sort((a: Habitacion, b: Habitacion) =>
         parseInt(a.number) - parseInt(b.number)
       )
@@ -80,7 +81,7 @@ export default function HabitacionesPage() {
     if (!editando) return
     setGuardando(true)
     try {
-      await fetch(`${API}/habitaciones/${editando.id}?hotel_id=${HOTEL_ID}`, {
+      await authFetch(`${API}/habitaciones/${editando.id}?hotel_id=${HOTEL_ID}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -101,7 +102,7 @@ export default function HabitacionesPage() {
 
   async function handleToggleActivo(hab: Habitacion) {
     try {
-      await fetch(`${API}/habitaciones/${hab.id}?hotel_id=${HOTEL_ID}`, {
+      await authFetch(`${API}/habitaciones/${hab.id}?hotel_id=${HOTEL_ID}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ active: !hab.active }),
