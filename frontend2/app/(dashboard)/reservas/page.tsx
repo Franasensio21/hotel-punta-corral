@@ -64,7 +64,7 @@ export default function ReservasPage() {
   const handleBorrar = async () => {
   if (!borrarReserva) return
   try {
-    await authFetch(`http://http://localhost:8000/api/v1/reservas/${borrarReserva.id}/borrar?hotel_id=1`, {
+    await authFetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/reservas/${borrarReserva.id}/borrar?hotel_id=1`, {
       method: "DELETE"
     })
     toast.success("Reserva eliminada correctamente")

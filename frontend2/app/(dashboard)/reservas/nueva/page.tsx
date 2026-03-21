@@ -114,7 +114,7 @@ export default function NuevaReservaPage() {
         tipo_ocupacion: tipoOcupacion,
       }
 
-      const res = await authFetch(`http://http://localhost:8000/api/v1/reservar?hotel_id=1`, {
+      const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/reservar?hotel_id=1`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
