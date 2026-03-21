@@ -53,21 +53,38 @@ export default function NuevaReservaPage() {
   const [nuevoEmail, setNuevoEmail] = useState("")
   const [modoNuevoCliente, setModoNuevoCliente] = useState(false)
 
-  useEffect(() => {
-    api.getClientes().then(setClientes).catch(console.error)
-  }, [])
-
-  useEffect(() => {
-    if (dateRange.from && dateRange.to) {
-      setLoadingRooms(true)
-      setSelectedRoomId("")
-      const fecha = format(dateRange.from, "yyyy-MM-dd")
-      api.getDisponibilidadPorFecha(fecha)
-        .then(data => setHabitaciones(data.filter(h => h.disponible)))
-        .catch(console.error)
-        .finally(() => setLoadingRooms(false))
-    }
-  }, [dateRange])
+ useEffect(() => {
+  if (dateRange.from && dateRange.to) {
+    setLoadingRooms(true)
+    setSelectedRoomId("")
+    const check_in = format(dateRange.from, "yyyy-MM-dd")
+    const check_out = format(dateRange.to, "yyyy-MM-dd")
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/disponibilidad/rango?check_in=${check_in}&check_out=${check_out}&hotel_id=1`)
+      .then(r => r.json())
+      .then(data => {
+        const rooms = data.habitaciones.map((h: any) => ({
+          id: h.id,
+          numero: h.numero,
+          tipo: h.tipo,
+          capacidad: h.capacidad,
+          disponible: true,
+          subtipo: null,
+          origen: null,
+          huesped: null,
+          grupo: null,
+          piso: 0,
+          genero: "mixto",
+          precio_por_noche: 0,
+          estado: "libre",
+          created_at: "",
+          updated_at: "",
+        }))
+        setHabitaciones(rooms)
+      })
+      .catch(console.error)
+      .finally(() => setLoadingRooms(false))
+  }
+}, [dateRange])
 
   const noches = dateRange.from && dateRange.to ? differenceInDays(dateRange.to, dateRange.from) : 0
   const selectedRoom = habitaciones.find(h => h.id.toString() === selectedRoomId)
