@@ -67,16 +67,23 @@ export function isAuthenticated(): boolean {
 }
 
 
-export function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
+export async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
   const token = typeof window !== "undefined" ? localStorage.getItem("hotel_token") : null
   const { headers: extraHeaders, ...restOptions } = options
-  return fetch(url, {
+  const response = await fetch(url, {
     ...restOptions,
     headers: {
       "Content-Type": "application/json",
       ...(extraHeaders as Record<string, string> || {}),
-      // El token va al final para que NUNCA sea pisado
       ...(token ? { "Authorization": `Bearer ${token}` } : {}),
     },
   })
+
+  if (response.status === 401) {
+    localStorage.removeItem("hotel_token")
+    localStorage.removeItem("hotel_user")
+    window.location.href = "/login"
+  }
+
+  return response
 }
