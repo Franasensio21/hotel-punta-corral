@@ -1052,3 +1052,13 @@ def mover_reserva(
 @public_router.get("/debug/secret", tags=["Debug"])
 def debug_secret():
     return {"secret": settings.SECRET_KEY[:10]}
+
+
+@public_router.get("/debug/token", tags=["Debug"])
+def debug_token(token: str = Query(...)):
+    from jose import jwt
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+        return {"ok": True, "payload": payload}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
