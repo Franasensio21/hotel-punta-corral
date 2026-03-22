@@ -221,7 +221,7 @@ export default function NuevaReservaPage() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
-                    <Calendar mode="single" selected={dateRange.from} onSelect={(date) => setDateRange(prev => ({ ...prev, from: date }))} disabled={(date) => date < new Date()} initialFocus />
+                    <Calendar mode="single" selected={dateRange.from} onSelect={(date) => setDateRange(prev => ({ ...prev, from: date }))} disabled={undefined} initialFocus />
                   </PopoverContent>
                 </Popover>
 
