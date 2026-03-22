@@ -40,7 +40,7 @@ interface Sueldo {
   sueldo_por_hora: number
 }
 
-const emptyForm = { name: "", email: "", password: "", phone: "", role: "employee", categoria: "", fecha_ingreso: "" }
+const emptyForm = { name: "", email: "",username:"", password: "", phone: "", role: "employee", categoria: "", fecha_ingreso: "" }
 const emptySueldo = { sueldo_fijo: "", sueldo_por_hora: "" }
 
 export default function EmpleadosPage() {
@@ -86,6 +86,7 @@ export default function EmpleadosPage() {
       role:          emp.role,
       categoria:     emp.categoria || "",
       fecha_ingreso: emp.fecha_ingreso ? emp.fecha_ingreso.slice(0, 10) : "",
+      username: emp.email || "",
     })
     setModalOpen(true)
   }
@@ -101,10 +102,10 @@ export default function EmpleadosPage() {
   }
 
   async function handleGuardar() {
-    if (!form.name || !form.email) {
-      toast.error("Nombre y email son obligatorios")
-      return
-    }
+    if (!form.name) {
+  toast.error("El nombre es obligatorio")
+  return
+}
     if (!editando && !form.password) {
       toast.error("La contraseña es obligatoria para nuevos empleados")
       return
@@ -113,7 +114,7 @@ export default function EmpleadosPage() {
     try {
       const body: any = {
         name:          form.name,
-        email:         form.email,
+        email:         form.username,
         phone:         form.phone || null,
         role:          form.role,
         categoria:     form.categoria || null,
@@ -286,13 +287,13 @@ export default function EmpleadosPage() {
           </DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <div className="col-span-2 flex flex-col gap-2">
-              <Label>Nombre completo *</Label>
-              <Input value={form.name} onChange={e => campo("name", e.target.value)} placeholder="Ej: María García" />
-            </div>
-            <div className="col-span-2 flex flex-col gap-2">
-              <Label>Email *</Label>
-              <Input type="email" value={form.email} onChange={e => campo("email", e.target.value)} placeholder="empleado@hotel.com" />
-            </div>
+  <Label>Usuario (para login) *</Label>
+  <Input value={form.username} onChange={e => campo("username", e.target.value)} placeholder="Ej: maria.garcia" />
+</div>
+<div className="col-span-2 flex flex-col gap-2">
+  <Label>Email</Label>
+  <Input type="email" value={form.email} onChange={e => campo("email", e.target.value)} placeholder="empleado@hotel.com" />
+</div>
             <div className="flex flex-col gap-2">
               <Label>{editando ? "Nueva contraseña (opcional)" : "Contraseña *"}</Label>
               <Input type="password" value={form.password} onChange={e => campo("password", e.target.value)} placeholder="••••••••" />
