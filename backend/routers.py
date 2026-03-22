@@ -333,12 +333,12 @@ def crear_reserva(
     try:
         reservation = services.create_reservation(db, hotel_id, data)
     except IntegrityError as e:
-    db.rollback()
-    print(f"ERROR RESERVA: {str(e)}")
-    raise HTTPException(
-        status_code=409,
-        detail="La habitación ya tiene una reserva en ese rango de fechas.",
-    )
+        db.rollback()
+        print(f"ERROR RESERVA: {str(e)}")
+        raise HTTPException(
+            status_code=409,
+            detail="La habitación ya tiene una reserva en ese rango de fechas.",
+        )
     return reservation
 
 
