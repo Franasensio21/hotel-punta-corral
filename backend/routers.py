@@ -583,7 +583,7 @@ def login(
         )
 
     token = auth_module.create_access_token({
-    "sub":      user.id,
+    "sub":      str(user.id),
     "role":     user.role,
     "categoria": user.categoria,
     "hotel_id": user.hotel_id,
