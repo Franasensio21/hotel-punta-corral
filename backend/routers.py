@@ -1047,3 +1047,8 @@ def mover_reserva(
     """), {"room_id": data["room_id_destino"], "id": reserva_id, "hotel_id": hotel_id})
     db.commit()
     return {"ok": True}
+
+
+@public_router.get("/debug/secret", tags=["Debug"])
+def debug_secret():
+    return {"secret": settings.SECRET_KEY[:10]}
