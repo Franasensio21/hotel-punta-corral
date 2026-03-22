@@ -4,19 +4,25 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
-from backend import models, schemas, services
-from backend.database import get_db
-from backend.config import settings
-from backend import auth as auth_module
-from backend.auth import get_current_user, require_admin, hash_password
-router = APIRouter()
+from . import models, schemas, services
+from .database import get_db
+from .config import settings
+from . import auth as auth_module
+from .auth import get_current_user, require_admin, hash_password
+
+
+# Router público — sin autenticación (solo login)
+public_router = APIRouter()
+
+# Router protegido — requiere token JWT
+router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
 # ══════════════════════════════════════════════════════════════
 # DISPONIBILIDAD
 # ══════════════════════════════════════════════════════════════
 
-@router.get(
+@public_router.get(
     "/disponibilidad",
     response_model=schemas.AvailabilityResponse,
     summary="Disponibilidad de habitaciones por fecha",
@@ -63,7 +69,7 @@ def get_disponibilidad(
     )
 
 
-@router.get(
+@public_router.get(
     "/disponibilidad/ai",
     summary="Disponibilidad optimizada para IA (mínimo tokens)",
     tags=["Disponibilidad"],
@@ -95,7 +101,7 @@ def get_disponibilidad_ai(
     return services.build_ai_payload(hotel_id, fecha, rooms_data)
 
 
-@router.get(
+@public_router.get(
     "/disponibilidad/rango",
     summary="Habitaciones libres en un rango de fechas",
     tags=["Disponibilidad"],
@@ -478,7 +484,7 @@ def get_grupos(
 # PRECIOS
 # ══════════════════════════════════════════════════════════════
 
-@router.get("/precios", tags=["Precios"])
+@public_router.get("/precios", tags=["Precios"])
 def get_precios(
     hotel_id: int = Query(settings.DEFAULT_HOTEL_ID),
     tipo: Optional[str] = Query(None),
@@ -530,7 +536,7 @@ def delete_precio(
     return {"ok": True}
 
 
-@router.get("/precios/consulta", tags=["Precios"])
+@public_router.get("/precios/consulta", tags=["Precios"])
 def consultar_precio(
     fecha: date = Query(...),
     tipo:  str   = Query(...),
@@ -560,7 +566,7 @@ def consultar_precio(
 
 from fastapi.security import OAuth2PasswordRequestForm
 
-@router.post("/auth/login", tags=["Auth"])
+@public_router.post("/auth/login", tags=["Auth"])
 def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)

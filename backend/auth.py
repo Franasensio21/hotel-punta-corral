@@ -8,11 +8,12 @@ from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from backend import models
-from backend.database import get_db
-from backend.config import settings
+from . import models
+from .database import get_db
+from .config import settings
 
-SECRET_KEY    = "hotel_punta_corral_secret_key_2026_cambiar_en_produccion"
+from .config import settings
+SECRET_KEY = settings.SECRET_KEY
 ALGORITHM     = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 7
 

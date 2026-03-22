@@ -1,7 +1,7 @@
 from datetime import date
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
-from backend import models, schemas
+from . import models, schemas
 
 
 # Mapa de tipo largo a abreviatura para el JSON de IA
