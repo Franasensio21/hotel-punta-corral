@@ -52,6 +52,8 @@ def get_or_create_label(service, label_name):
 
 
 def get_unprocessed_emails(service, max_results=20):
+    from datetime import timedelta
+    fecha_limite = (date.today() - timedelta(days=5)).strftime("%Y/%m/%d")
     query = (
         f"-label:{LABEL_PROCESADO} "
         f"in:inbox "
@@ -59,7 +61,8 @@ def get_unprocessed_emails(service, max_results=20):
         f"-category:social "
         f"-category:updates "
         f"-category:forums "
-        f"is:unread"
+        f"is:unread "
+        f"after:{fecha_limite}"
     )
     result = service.users().messages().list(userId="me", q=query, maxResults=max_results).execute()
     return result.get("messages", [])
