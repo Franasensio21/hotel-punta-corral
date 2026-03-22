@@ -389,4 +389,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Hotel Email Bot")
     parser.add_argument("--test", action="store_true", help="Modo test: no crea borradores")
     args = parser.parse_args()
-    process_emails(test_mode=args.test)
+
+    INTERVALO = int(os.getenv("INTERVALO_MINUTOS", "15")) * 60
+
+    while True:
+        try:
+            process_emails(test_mode=args.test)
+        except Exception as e:
+            print(f"Error en el ciclo principal: {e}")
+        print(f"Esperando {INTERVALO // 60} minutos...\n")
+        time.sleep(INTERVALO)
