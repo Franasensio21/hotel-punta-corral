@@ -99,6 +99,8 @@ interface Sueldo {
   sueldo_por_hora: number;
   tipo_empleado: string;
   horas_diarias: number | null;
+  mes:             number | null;
+  anio:            number | null;
 }
 
 const emptyForm = {
@@ -161,7 +163,7 @@ export default function EmpleadosPage() {
     try {
       const [empData, sueldoData] = await Promise.all([
         authFetch(`${API}/usuarios?hotel_id=${HOTEL_ID}`).then((r) => r.json()),
-        authFetch(`${API}/sueldos?hotel_id=${HOTEL_ID}`).then((r) => r.json()),
+        authFetch(`${API}/sueldos/historial?hotel_id=${HOTEL_ID}`).then(r => r.json()),
       ]);
       setEmpleados(empData);
       setSueldos(sueldoData);
@@ -274,18 +276,24 @@ export default function EmpleadosPage() {
 
   function abrirSueldo(emp: Empleado) {
     setEmpleadoSueldo(emp);
-    const s = sueldos.find((s) => s.user_id === emp.id);
+    const mesActual = new Date().getMonth() + 1;
+    const anioActual = new Date().getFullYear();
+    // Buscar sueldo del mes actual
+    const s =
+      sueldos.find(
+        (s) =>
+          s.user_id === emp.id && s.mes === mesActual && s.anio === anioActual,
+      ) || sueldos.find((s) => s.user_id === emp.id);
     setFormSueldo({
       sueldo_fijo: s ? s.sueldo_fijo.toString() : "0",
       sueldo_por_hora: s ? s.sueldo_por_hora.toString() : "0",
       tipo_empleado: s ? s.tipo_empleado || "temporal" : "temporal",
       horas_diarias: s?.horas_diarias ? s.horas_diarias.toString() : "",
-      mes: new Date().getMonth() + 1,
-      anio: new Date().getFullYear(),
+      mes: mesActual,
+      anio: anioActual,
     });
     setSueldoOpen(true);
   }
-
   async function handleGuardar() {
     if (!form.name) {
       toast.error("El nombre es obligatorio");
@@ -682,9 +690,31 @@ export default function EmpleadosPage() {
                 <Label>Mes</Label>
                 <Select
                   value={formSueldo.mes.toString()}
-                  onValueChange={(v) =>
-                    setFormSueldo((f) => ({ ...f, mes: parseInt(v) }))
-                  }
+                  onValueChange={(v) => {
+                    const m = parseInt(v);
+                    const s =
+                      sueldos.find(
+                        (s) =>
+                          s.user_id === empleadoSueldo?.id &&
+                          s.mes === m &&
+                          s.anio === formSueldo.anio,
+                      ) ||
+                      sueldos.find(
+                        (s) => s.user_id === empleadoSueldo?.id && !s.mes,
+                      );
+                    setFormSueldo((f) => ({
+                      ...f,
+                      mes: m,
+                      sueldo_fijo: s ? s.sueldo_fijo.toString() : "0",
+                      sueldo_por_hora: s ? s.sueldo_por_hora.toString() : "0",
+                      tipo_empleado: s
+                        ? s.tipo_empleado || "temporal"
+                        : "temporal",
+                      horas_diarias: s?.horas_diarias
+                        ? s.horas_diarias.toString()
+                        : "",
+                    }));
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -702,9 +732,31 @@ export default function EmpleadosPage() {
                 <Label>Año</Label>
                 <Select
                   value={formSueldo.anio.toString()}
-                  onValueChange={(v) =>
-                    setFormSueldo((f) => ({ ...f, anio: parseInt(v) }))
-                  }
+                  onValueChange={(v) => {
+                    const a = parseInt(v);
+                    const s =
+                      sueldos.find(
+                        (s) =>
+                          s.user_id === empleadoSueldo?.id &&
+                          s.mes === formSueldo.mes &&
+                          s.anio === a,
+                      ) ||
+                      sueldos.find(
+                        (s) => s.user_id === empleadoSueldo?.id && !s.mes,
+                      );
+                    setFormSueldo((f) => ({
+                      ...f,
+                      anio: a,
+                      sueldo_fijo: s ? s.sueldo_fijo.toString() : "0",
+                      sueldo_por_hora: s ? s.sueldo_por_hora.toString() : "0",
+                      tipo_empleado: s
+                        ? s.tipo_empleado || "temporal"
+                        : "temporal",
+                      horas_diarias: s?.horas_diarias
+                        ? s.horas_diarias.toString()
+                        : "",
+                    }));
+                  }}
                 >
                   <SelectTrigger className="w-[90px]">
                     <SelectValue />

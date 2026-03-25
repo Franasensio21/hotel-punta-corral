@@ -856,6 +856,20 @@ def create_sueldo(data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), 
     })
     db.commit()
     return {"ok": True}
+
+
+@router.get("/sueldos/historial", tags=["Sueldos"])
+def get_sueldos_historial(hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    result = db.execute(text("""
+        SELECT s.id, s.user_id, u.name, u.categoria, s.sueldo_fijo, s.sueldo_por_hora,
+               s.activo, s.tipo_empleado, s.horas_diarias, s.mes, s.anio
+        FROM sueldos s
+        JOIN users u ON u.id = s.user_id
+        WHERE s.hotel_id = :hotel_id
+        ORDER BY s.user_id, s.anio DESC NULLS LAST, s.mes DESC NULLS LAST
+    """), {"hotel_id": hotel_id}).fetchall()
+    return [dict(r._mapping) for r in result]
 # ══════════════════════════════════════════════════════════════
 # CONFIGURACIÓN
 # ══════════════════════════════════════════════════════════════
