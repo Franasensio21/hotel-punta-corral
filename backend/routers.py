@@ -393,6 +393,10 @@ def update_reserva(
         res.status = data.status
     if data.notes is not None:
         res.notes = data.notes
+    if data.precio_total is not None:
+        res.precio_total = data.precio_total
+    if data.sena is not None:
+        res.sena = data.sena
 
     db.commit()
     db.refresh(res)

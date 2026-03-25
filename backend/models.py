@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from sqlalchemy import (
     Boolean, Column, Date, ForeignKey, Integer,
-    SmallInteger, String, Text, TIMESTAMP, CheckConstraint
+    SmallInteger, String, Text, TIMESTAMP, CheckConstraint,Numeric
 )
 from sqlalchemy.orm import relationship
 from .database import Base
@@ -105,7 +105,8 @@ class Reservation(Base):
     created_at = Column(TIMESTAMP(timezone=True), default=datetime.utcnow)
     updated_at = Column(TIMESTAMP(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
     tipo_ocupacion = Column(String(20), default="individual")
-
+    precio_total = Column(Numeric(10, 2), nullable=True)
+    sena         = Column(Numeric(10, 2), nullable=True)
     hotel   = relationship("Hotel",   back_populates="reservations")
     room    = relationship("Room",    back_populates="reservations")
     guest   = relationship("Guest",   back_populates="reservations")

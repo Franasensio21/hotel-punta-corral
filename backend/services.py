@@ -106,6 +106,8 @@ def create_reservation(db: Session, hotel_id: int,
         check_out  = data.check_out,
         notes      = data.notes,
         tipo_ocupacion = getattr(data, "tipo_ocupacion", "individual"),
+        precio_total   = getattr(data, "precio_total", None),
+        sena           = getattr(data, "sena", None),
     )
     db.add(reservation)
     db.commit()

@@ -77,14 +77,16 @@ class GroupOut(GroupCreate):
 # ── Reservations ───────────────────────────────────────────────────────────
 
 class ReservationCreate(BaseModel):
-    room_id:    int
-    guest_id:   Optional[int] = None
-    channel_id: int
-    group_id:   Optional[int] = None
-    check_in:   date
-    check_out:  date
-    notes:      Optional[str] = None
+    room_id:        int
+    guest_id:       Optional[int] = None
+    channel_id:     int
+    group_id:       Optional[int] = None
+    check_in:       date
+    check_out:      date
+    notes:          Optional[str] = None
     tipo_ocupacion: Optional[str] = "individual"
+    precio_total:   Optional[float] = None
+    sena:           Optional[float] = None
 
     @field_validator("check_out")
     @classmethod
@@ -95,32 +97,34 @@ class ReservationCreate(BaseModel):
 
 
 class ReservationOut(BaseModel):
-    id:          int
-    hotel_id:    int
-    room_id:     int
-    guest_id:    Optional[int]
-    channel_id:  int
-    group_id:    Optional[int]
-    check_in:    date
-    check_out:   date
-    status:      str
-    notes:       Optional[str]
-    created_at:  datetime
-    
+    id:             int
+    hotel_id:       int
+    room_id:        int
+    guest_id:       Optional[int]
+    channel_id:     int
+    group_id:       Optional[int]
+    check_in:       date
+    check_out:      date
+    status:         str
+    notes:          Optional[str]
+    created_at:     datetime
+    precio_total:   Optional[float] = None
+    sena:           Optional[float] = None
 
-    # Datos relacionados (opcionales, se incluyen cuando se hace JOIN)
-    room_number:  Optional[str] = None
-    room_type:    Optional[str] = None
-    guest_name:   Optional[str] = None
-    channel_name: Optional[str] = None
-    group_name:   Optional[str] = None
+    room_number:    Optional[str] = None
+    room_type:      Optional[str] = None
+    guest_name:     Optional[str] = None
+    channel_name:   Optional[str] = None
+    group_name:     Optional[str] = None
     tipo_ocupacion: Optional[str] = None
     model_config = {"from_attributes": True}
 
 
 class ReservationUpdate(BaseModel):
-    status: Optional[str] = None
-    notes:  Optional[str] = None
+    status:       Optional[str]   = None
+    notes:        Optional[str]   = None
+    precio_total: Optional[float] = None
+    sena:         Optional[float] = None
 
 
 # ── Availability ───────────────────────────────────────────────────────────
