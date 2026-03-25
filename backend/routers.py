@@ -799,26 +799,49 @@ def delete_gasto(gasto_id: int, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID)
 # ══════════════════════════════════════════════════════════════
 
 @router.get("/sueldos", tags=["Sueldos"])
-def get_sueldos(hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def get_sueldos(
+    hotel_id: int = Query(settings.DEFAULT_HOTEL_ID),
+    mes: int = Query(None),
+    anio: int = Query(None),
+    db: Session = Depends(get_db)
+):
     from sqlalchemy import text
+    import datetime
+    hoy = datetime.date.today()
+    mes  = mes  or hoy.month
+    anio = anio or hoy.year
+
+    # Busca el sueldo del mes/anio pedido, sino el más reciente anterior
     result = db.execute(text("""
-        SELECT s.id, s.user_id, u.name, u.categoria, s.sueldo_fijo, s.sueldo_por_hora, 
-               s.activo, s.tipo_empleado, s.horas_diarias
+        SELECT DISTINCT ON (s.user_id)
+               s.id, s.user_id, u.name, u.categoria, s.sueldo_fijo, s.sueldo_por_hora,
+               s.activo, s.tipo_empleado, s.horas_diarias, s.mes, s.anio
         FROM sueldos s
         JOIN users u ON u.id = s.user_id
         WHERE s.hotel_id = :hotel_id
-        ORDER BY u.name
-    """), {"hotel_id": hotel_id}).fetchall()
+          AND (
+            (s.mes = :mes AND s.anio = :anio)
+            OR (s.mes IS NULL AND s.anio IS NULL)
+            OR (s.anio < :anio)
+            OR (s.anio = :anio AND s.mes <= :mes)
+          )
+        ORDER BY s.user_id, s.anio DESC NULLS LAST, s.mes DESC NULLS LAST
+    """), {"hotel_id": hotel_id, "mes": mes, "anio": anio}).fetchall()
     return [dict(r._mapping) for r in result]
 
 
 @router.post("/sueldos", status_code=201, tags=["Sueldos"])
 def create_sueldo(data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
     from sqlalchemy import text
+    import datetime
+    hoy = datetime.date.today()
+    mes  = data.get("mes")  or hoy.month
+    anio = data.get("anio") or hoy.year
+
     db.execute(text("""
-        INSERT INTO sueldos (hotel_id, user_id, sueldo_fijo, sueldo_por_hora, tipo_empleado, horas_diarias)
-        VALUES (:hotel_id, :user_id, :sueldo_fijo, :sueldo_por_hora, :tipo_empleado, :horas_diarias)
-        ON CONFLICT (hotel_id, user_id) DO UPDATE
+        INSERT INTO sueldos (hotel_id, user_id, sueldo_fijo, sueldo_por_hora, tipo_empleado, horas_diarias, mes, anio)
+        VALUES (:hotel_id, :user_id, :sueldo_fijo, :sueldo_por_hora, :tipo_empleado, :horas_diarias, :mes, :anio)
+        ON CONFLICT (hotel_id, user_id, mes, anio) DO UPDATE
         SET sueldo_fijo = :sueldo_fijo, sueldo_por_hora = :sueldo_por_hora,
             tipo_empleado = :tipo_empleado, horas_diarias = :horas_diarias
     """), {
@@ -828,6 +851,8 @@ def create_sueldo(data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), 
         "sueldo_por_hora": data.get("sueldo_por_hora", 0),
         "tipo_empleado":   data.get("tipo_empleado", "temporal"),
         "horas_diarias":   data.get("horas_diarias"),
+        "mes":             mes,
+        "anio":            anio,
     })
     db.commit()
     return {"ok": True}
