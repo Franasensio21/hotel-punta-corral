@@ -178,7 +178,12 @@ export default function EmpleadosPage() {
     setDashLoading(true);
     setDashData(null);
     try {
-      const sueldo = sueldos.find((s) => s.user_id === emp.id);
+      const sueldosEmpleado = sueldos.filter(s => s.user_id === emp.id)
+      const sueldo = sueldosEmpleado.find(s => s.mes === (mes + 1) && s.anio === anio)
+        || sueldosEmpleado
+            .filter(s => s.anio !== null)
+            .sort((a, b) => (b.anio || 0) - (a.anio || 0) || (b.mes || 0) - (a.mes || 0))[0]
+        || sueldosEmpleado[0]
       if (!sueldo) {
         setDashLoading(false);
         return;
