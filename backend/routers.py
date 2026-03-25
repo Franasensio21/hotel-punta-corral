@@ -802,7 +802,8 @@ def delete_gasto(gasto_id: int, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID)
 def get_sueldos(hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
     from sqlalchemy import text
     result = db.execute(text("""
-        SELECT s.id, s.user_id, u.name, u.categoria, s.sueldo_fijo, s.sueldo_por_hora, s.activo
+        SELECT s.id, s.user_id, u.name, u.categoria, s.sueldo_fijo, s.sueldo_por_hora, 
+               s.activo, s.tipo_empleado, s.horas_diarias
         FROM sueldos s
         JOIN users u ON u.id = s.user_id
         WHERE s.hotel_id = :hotel_id
@@ -815,15 +816,18 @@ def get_sueldos(hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = 
 def create_sueldo(data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
     from sqlalchemy import text
     db.execute(text("""
-        INSERT INTO sueldos (hotel_id, user_id, sueldo_fijo, sueldo_por_hora)
-        VALUES (:hotel_id, :user_id, :sueldo_fijo, :sueldo_por_hora)
+        INSERT INTO sueldos (hotel_id, user_id, sueldo_fijo, sueldo_por_hora, tipo_empleado, horas_diarias)
+        VALUES (:hotel_id, :user_id, :sueldo_fijo, :sueldo_por_hora, :tipo_empleado, :horas_diarias)
         ON CONFLICT (hotel_id, user_id) DO UPDATE
-        SET sueldo_fijo = :sueldo_fijo, sueldo_por_hora = :sueldo_por_hora
+        SET sueldo_fijo = :sueldo_fijo, sueldo_por_hora = :sueldo_por_hora,
+            tipo_empleado = :tipo_empleado, horas_diarias = :horas_diarias
     """), {
         "hotel_id":        hotel_id,
         "user_id":         data["user_id"],
         "sueldo_fijo":     data.get("sueldo_fijo", 0),
         "sueldo_por_hora": data.get("sueldo_por_hora", 0),
+        "tipo_empleado":   data.get("tipo_empleado", "temporal"),
+        "horas_diarias":   data.get("horas_diarias"),
     })
     db.commit()
     return {"ok": True}
