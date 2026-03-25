@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { format, differenceInDays } from "date-fns"
 import { es } from "date-fns/locale"
-import { CalendarIcon, ArrowRight } from "lucide-react"
+import { CalendarIcon, ArrowRight, X } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
@@ -15,11 +15,14 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { api } from "@/lib/api"
-import type { Cliente, HabitacionDisponible, ReservaForm } from "@/lib/types"
+import { Badge } from "@/components/ui/badge"
+import type { Cliente, HabitacionDisponible } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { authFetch } from "@/lib/auth"
+
+const API = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api/v1"
+const HOTEL_ID = 1
 
 const TIPO_LABELS: Record<string, string> = {
   double: "Doble", triple: "Triple", quad: "Cuádruple", quintuple: "Quíntuple",
@@ -42,53 +45,81 @@ export default function NuevaReservaPage() {
   const [habitaciones, setHabitaciones] = useState<HabitacionDisponible[]>([])
 
   const [selectedClientId, setSelectedClientId] = useState<string>("")
-  const [selectedRoomId, setSelectedRoomId] = useState<string>("")
+  const [selectedRoomIds, setSelectedRoomIds] = useState<string[]>([])
   const [selectedCanalId, setSelectedCanalId] = useState<string>("2")
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined })
   const [notas, setNotas] = useState("")
-  const [tipoOcupacion, setTipoOcupacion] = useState<string>("individual")
+  const [tipoOcupacion, setTipoOcupacion] = useState<Record<string, string>>({})
 
   // Nuevo cliente
   const [nuevoNombre, setNuevoNombre] = useState("")
   const [nuevoEmail, setNuevoEmail] = useState("")
   const [modoNuevoCliente, setModoNuevoCliente] = useState(false)
 
- useEffect(() => {
-  if (dateRange.from && dateRange.to) {
-    setLoadingRooms(true)
-    setSelectedRoomId("")
-    const check_in = format(dateRange.from, "yyyy-MM-dd")
-    const check_out = format(dateRange.to, "yyyy-MM-dd")
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/disponibilidad/rango?check_in=${check_in}&check_out=${check_out}&hotel_id=1`)
+  // Cargar clientes al montar
+  useEffect(() => {
+    authFetch(`${API}/clientes?hotel_id=${HOTEL_ID}`)
       .then(r => r.json())
       .then(data => {
-        const rooms = data.habitaciones.map((h: any) => ({
-          id: h.id,
-          numero: h.numero,
-          tipo: h.tipo,
-          capacidad: h.capacidad,
-          disponible: true,
-          subtipo: null,
-          origen: null,
-          huesped: null,
-          grupo: null,
-          piso: 0,
-          genero: "mixto",
-          precio_por_noche: 0,
-          estado: "libre",
-          created_at: "",
-          updated_at: "",
+        const mapped = (Array.isArray(data) ? data : []).map((c: any) => ({
+          id: c.id,
+          nombre: c.name.split(" ")[0] || c.name,
+          apellido: c.name.split(" ").slice(1).join(" ") || "",
+          dni: "",
+          telefono: c.phone || undefined,
+          email: c.email || undefined,
+          origen: "nacional" as any,
+          created_at: c.created_at,
+          updated_at: c.created_at,
         }))
-        setHabitaciones(rooms)
+        setClientes(mapped)
       })
       .catch(console.error)
-      .finally(() => setLoadingRooms(false))
-  }
-}, [dateRange])
+  }, [])
+
+  // Cargar habitaciones disponibles cuando cambian fechas
+  useEffect(() => {
+    if (dateRange.from && dateRange.to) {
+      setLoadingRooms(true)
+      setSelectedRoomIds([])
+      const check_in = format(dateRange.from, "yyyy-MM-dd")
+      const check_out = format(dateRange.to, "yyyy-MM-dd")
+      fetch(`${API}/disponibilidad/rango?check_in=${check_in}&check_out=${check_out}&hotel_id=${HOTEL_ID}`)
+        .then(r => r.json())
+        .then(data => {
+          const rooms = (data.habitaciones || []).map((h: any) => ({
+            id: h.id,
+            numero: h.numero,
+            tipo: h.tipo,
+            capacidad: h.capacidad,
+            disponible: true,
+            subtipo: null,
+            origen: null,
+            huesped: null,
+            grupo: null,
+            piso: 0,
+            genero: "mixto",
+            precio_por_noche: 0,
+            estado: "libre",
+            created_at: "",
+            updated_at: "",
+          }))
+          setHabitaciones(rooms)
+        })
+        .catch(console.error)
+        .finally(() => setLoadingRooms(false))
+    }
+  }, [dateRange])
 
   const noches = dateRange.from && dateRange.to ? differenceInDays(dateRange.to, dateRange.from) : 0
-  const selectedRoom = habitaciones.find(h => h.id.toString() === selectedRoomId)
-  const canSubmit = (selectedClientId || nuevoNombre.trim()) && selectedRoomId && dateRange.from && dateRange.to && noches > 0
+  const selectedRooms = habitaciones.filter(h => selectedRoomIds.includes(h.id.toString()))
+  const canSubmit = (selectedClientId || nuevoNombre.trim()) && selectedRoomIds.length > 0 && dateRange.from && dateRange.to && noches > 0
+
+  const toggleRoom = (roomId: string) => {
+    setSelectedRoomIds(prev =>
+      prev.includes(roomId) ? prev.filter(id => id !== roomId) : [...prev, roomId]
+    )
+  }
 
   const handleSubmit = async () => {
     if (!canSubmit) {
@@ -100,49 +131,46 @@ export default function NuevaReservaPage() {
     try {
       let clienteId = parseInt(selectedClientId)
 
-      // Si es nuevo cliente, crearlo primero
       if (modoNuevoCliente && nuevoNombre.trim()) {
-        const nuevoCliente = await api.createCliente({
-          nombre: nuevoNombre.split(" ")[0],
-          apellido: nuevoNombre.split(" ").slice(1).join(" "),
-          dni: "",
-          origen: "nacional",
-          email: nuevoEmail || undefined,
+        const res = await authFetch(`${API}/clientes?hotel_id=${HOTEL_ID}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: nuevoNombre.trim(),
+            email: nuevoEmail || null,
+            phone: null,
+          }),
         })
+        const nuevoCliente = await res.json()
         clienteId = nuevoCliente.id
       }
 
-      const reservaData: ReservaForm = {
-        cliente_id: clienteId,
-        habitacion_id: parseInt(selectedRoomId),
-        fecha_checkin: format(dateRange.from!, "yyyy-MM-dd"),
-        fecha_checkout: format(dateRange.to!, "yyyy-MM-dd"),
-        notas: notas || undefined,
-      }
+      const resultados = await Promise.all(
+        selectedRoomIds.map(roomId => {
+          const tipo = tipoOcupacion[roomId] || "individual"
+          return authFetch(`${API}/reservar?hotel_id=${HOTEL_ID}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              room_id: parseInt(roomId),
+              guest_id: clienteId || null,
+              channel_id: parseInt(selectedCanalId),
+              check_in: format(dateRange.from!, "yyyy-MM-dd"),
+              check_out: format(dateRange.to!, "yyyy-MM-dd"),
+              notes: notas || null,
+              tipo_ocupacion: tipo,
+            }),
+          })
+        })
+      )
 
-      // Inyectamos el canal seleccionado
-      const body = {
-        room_id: reservaData.habitacion_id,
-        guest_id: clienteId || null,
-        channel_id: parseInt(selectedCanalId),
-        check_in: reservaData.fecha_checkin,
-        check_out: reservaData.fecha_checkout,
-        notes: reservaData.notas || null,
-        tipo_ocupacion: tipoOcupacion,
-      }
-
-      const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/reservar?hotel_id=1`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      })
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ detail: "Error al crear la reserva" }))
+      const errores = resultados.filter(r => !r.ok)
+      if (errores.length > 0) {
+        const err = await errores[0].json().catch(() => ({ detail: "Error al crear la reserva" }))
         throw new Error(err.detail)
       }
 
-      toast.success("Reserva creada correctamente")
+      toast.success(`${selectedRoomIds.length} reserva${selectedRoomIds.length > 1 ? "s" : ""} creada${selectedRoomIds.length > 1 ? "s" : ""} correctamente`)
       router.push("/reservas")
     } catch (e: any) {
       toast.error(e.message || "Error al crear la reserva")
@@ -244,75 +272,76 @@ export default function NuevaReservaPage() {
             </CardContent>
           </Card>
 
-          {/* Habitación */}
+          {/* Habitaciones */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">3. Habitación</CardTitle>
+              <CardTitle className="text-base">3. Habitaciones</CardTitle>
               <CardDescription>
-                {dateRange.from && dateRange.to ? "Habitaciones libres para esas fechas" : "Primero elegí las fechas"}
+                {dateRange.from && dateRange.to ? `Podés seleccionar varias — ${selectedRoomIds.length} seleccionada${selectedRoomIds.length !== 1 ? "s" : ""}` : "Primero elegí las fechas"}
               </CardDescription>
             </CardHeader>
             <CardContent>
-  {!dateRange.from || !dateRange.to ? (
-    <div className="flex items-center justify-center py-8 border rounded-lg border-dashed">
-      <p className="text-sm text-muted-foreground">Seleccioná las fechas para ver disponibilidad</p>
-    </div>
-  ) : loadingRooms ? (
-    <div className="grid grid-cols-3 gap-3">
-      {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-lg" />)}
-    </div>
-  ) : habitaciones.length === 0 ? (
-    <div className="flex items-center justify-center py-8 border rounded-lg border-dashed">
-      <p className="text-sm text-muted-foreground">No hay habitaciones disponibles para esas fechas</p>
-    </div>
-  ) : (
-    <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
-        {habitaciones.map(h => (
-          <button key={h.id} onClick={() => {
-            setSelectedRoomId(h.id.toString())
-            setTipoOcupacion("individual")
-          }}
-            style={{
-              backgroundColor: selectedRoomId === h.id.toString() ? "#1d4ed8" : "#f0fdf4",
-              border: `2px solid ${selectedRoomId === h.id.toString() ? "#1d4ed8" : "#22c55e"}`,
-              color: selectedRoomId === h.id.toString() ? "#fff" : "#166534",
-              borderRadius: "10px", padding: "10px", cursor: "pointer",
-              display: "flex", flexDirection: "column", alignItems: "center", gap: "2px",
-              transition: "all 0.15s",
-            }}
-          >
-            <span style={{ fontSize: "16px", fontWeight: "900" }}>{h.numero}</span>
-            <span style={{ fontSize: "10px", fontWeight: "600" }}>{TIPO_LABELS[h.tipo] || h.tipo}</span>
-            <span style={{ fontSize: "10px" }}>{h.capacidad} pers.</span>
-          </button>
-        ))}
-      </div>
-      {selectedRoom && selectedRoom.tipo === "double" && (
-        <div className="flex flex-col gap-2">
-          <Label>Tipo de ocupación</Label>
-          <div className="flex gap-2">
-            <Button
-              variant={tipoOcupacion === "individual" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setTipoOcupacion("individual")}
-            >
-              Doble (2 personas)
-            </Button>
-            <Button
-              variant={tipoOcupacion === "single" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setTipoOcupacion("single")}
-            >
-              Single (1 persona)
-            </Button>
-          </div>
-        </div>
-        )}
-      </div>
-    )}
-  </CardContent>
-</Card>
+              {!dateRange.from || !dateRange.to ? (
+                <div className="flex items-center justify-center py-8 border rounded-lg border-dashed">
+                  <p className="text-sm text-muted-foreground">Seleccioná las fechas para ver disponibilidad</p>
+                </div>
+              ) : loadingRooms ? (
+                <div className="grid grid-cols-3 gap-3">
+                  {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-lg" />)}
+                </div>
+              ) : habitaciones.length === 0 ? (
+                <div className="flex items-center justify-center py-8 border rounded-lg border-dashed">
+                  <p className="text-sm text-muted-foreground">No hay habitaciones disponibles para esas fechas</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                    {habitaciones.map(h => {
+                      const isSelected = selectedRoomIds.includes(h.id.toString())
+                      return (
+                        <button key={h.id} onClick={() => toggleRoom(h.id.toString())}
+                          style={{
+                            backgroundColor: isSelected ? "#1d4ed8" : "#f0fdf4",
+                            border: `2px solid ${isSelected ? "#1d4ed8" : "#22c55e"}`,
+                            color: isSelected ? "#fff" : "#166534",
+                            borderRadius: "10px", padding: "10px", cursor: "pointer",
+                            display: "flex", flexDirection: "column", alignItems: "center", gap: "2px",
+                            transition: "all 0.15s",
+                          }}
+                        >
+                          <span style={{ fontSize: "16px", fontWeight: "900" }}>{h.numero}</span>
+                          <span style={{ fontSize: "10px", fontWeight: "600" }}>{TIPO_LABELS[h.tipo] || h.tipo}</span>
+                          <span style={{ fontSize: "10px" }}>{h.capacidad} pers.</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  {selectedRooms.filter(h => h.tipo === "double").map(h => (
+                    <div key={h.id} className="flex flex-col gap-2">
+                      <Label>Habitación {h.numero} — Tipo de ocupación</Label>
+                      <div className="flex gap-2">
+                        <Button
+                          variant={(tipoOcupacion[h.id.toString()] || "individual") === "individual" ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setTipoOcupacion(prev => ({ ...prev, [h.id.toString()]: "individual" }))}
+                        >
+                          Doble (2 personas)
+                        </Button>
+                        <Button
+                          variant={tipoOcupacion[h.id.toString()] === "single" ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setTipoOcupacion(prev => ({ ...prev, [h.id.toString()]: "single" }))}
+                        >
+                          Single (1 persona)
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Canal */}
           <Card>
@@ -354,9 +383,22 @@ export default function NuevaReservaPage() {
                     {modoNuevoCliente ? (nuevoNombre || "—") : (clientes.find(c => c.id.toString() === selectedClientId) ? `${clientes.find(c => c.id.toString() === selectedClientId)!.nombre} ${clientes.find(c => c.id.toString() === selectedClientId)!.apellido}` : "—")}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Habitación:</span>
-                  <span className="font-medium">{selectedRoom ? selectedRoom.numero : "—"}</span>
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground">Habitaciones:</span>
+                  {selectedRooms.length === 0 ? (
+                    <span className="font-medium">—</span>
+                  ) : (
+                    <div className="flex flex-wrap gap-1">
+                      {selectedRooms.map(h => (
+                        <Badge key={h.id} variant="outline" className="text-xs">
+                          {h.numero} {TIPO_LABELS[h.tipo] || h.tipo}
+                          <button onClick={() => toggleRoom(h.id.toString())} className="ml-1">
+                            <X className="size-2" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Check-in:</span>
@@ -375,7 +417,7 @@ export default function NuevaReservaPage() {
               <Separator />
 
               <Button size="lg" className="w-full" disabled={!canSubmit || loading} onClick={handleSubmit}>
-                {loading ? "Guardando..." : "Confirmar reserva"}
+                {loading ? "Guardando..." : `Confirmar ${selectedRoomIds.length > 1 ? selectedRoomIds.length + " reservas" : "reserva"}`}
               </Button>
             </CardContent>
           </Card>
