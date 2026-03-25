@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Pencil, UserX, UserCheck, DollarSign } from "lucide-react"
+import { Plus, Pencil, UserX, UserCheck, DollarSign, BarChart2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,15 +11,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
-import { format } from "date-fns"
+import { format, getDaysInMonth } from "date-fns"
 import { es } from "date-fns/locale"
 import { authFetch } from "@/lib/auth"
 
 const API = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api/v1"
 const HOTEL_ID = 1
 
-const CATEGORIAS = ["recepcionista", "mucama", "mozo", "mantenimiento", "administrador", "otro"]
+const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
+const CATEGORIAS = ["Administrador","Encargado","Mucama","Mozo","Mantenimiento","Sereno","Lavanderia","Desayuno","Jardineria","Jefe de cocina","Ayudante de cocina","Bachero","otro"]
 const ROLES = [{ value: "admin", label: "Administrador" }, { value: "employee", label: "Empleado" }]
 
 interface Empleado {
@@ -38,22 +40,42 @@ interface Sueldo {
   user_id:         number
   sueldo_fijo:     number
   sueldo_por_hora: number
+  tipo_empleado:   string
+  horas_diarias:   number | null
 }
 
-const emptyForm = { name: "", email: "",username:"", password: "", phone: "", role: "employee", categoria: "", fecha_ingreso: "" }
-const emptySueldo = { sueldo_fijo: "", sueldo_por_hora: "" }
+const emptyForm = { name: "", email: "", username: "", password: "", phone: "", role: "employee", categoria: "", fecha_ingreso: "" }
+const emptySueldo = { sueldo_fijo: "", sueldo_por_hora: "", tipo_empleado: "temporal", horas_diarias: "" }
 
 export default function EmpleadosPage() {
-  const [empleados, setEmpleados]     = useState<Empleado[]>([])
-  const [sueldos, setSueldos]         = useState<Sueldo[]>([])
-  const [loading, setLoading]         = useState(true)
-  const [modalOpen, setModalOpen]     = useState(false)
-  const [sueldoOpen, setSueldoOpen]   = useState(false)
-  const [editando, setEditando]       = useState<Empleado | null>(null)
+  const hoy = new Date()
+  const [empleados, setEmpleados]       = useState<Empleado[]>([])
+  const [sueldos, setSueldos]           = useState<Sueldo[]>([])
+  const [loading, setLoading]           = useState(true)
+  const [modalOpen, setModalOpen]       = useState(false)
+  const [sueldoOpen, setSueldoOpen]     = useState(false)
+  const [dashboardOpen, setDashboardOpen] = useState(false)
+  const [editando, setEditando]         = useState<Empleado | null>(null)
   const [empleadoSueldo, setEmpleadoSueldo] = useState<Empleado | null>(null)
-  const [form, setForm]               = useState(emptyForm)
-  const [formSueldo, setFormSueldo]   = useState(emptySueldo)
-  const [guardando, setGuardando]     = useState(false)
+  const [empleadoDashboard, setEmpleadoDashboard] = useState<Empleado | null>(null)
+  const [form, setForm]                 = useState(emptyForm)
+  const [formSueldo, setFormSueldo]     = useState(emptySueldo)
+  const [guardando, setGuardando]       = useState(false)
+
+  // Dashboard state
+  const [dashMes, setDashMes]   = useState(hoy.getMonth())
+  const [dashAnio, setDashAnio] = useState(hoy.getFullYear())
+  const [dashLoading, setDashLoading] = useState(false)
+  const [dashData, setDashData] = useState<{
+    sueldo_fijo: number
+    horas_extra_mins: number
+    horas_trabajadas_mins: number
+    total_extra: number
+    total: number
+    tipo_empleado: string
+    sueldo_por_hora: number
+    horas_diarias: number | null
+  } | null>(null)
 
   useEffect(() => { fetchData() }, [])
 
@@ -68,6 +90,78 @@ export default function EmpleadosPage() {
       setSueldos(sueldoData)
     } catch (e) { console.error(e) }
     finally { setLoading(false) }
+  }
+
+  async function calcularDashboard(emp: Empleado, mes: number, anio: number) {
+    setDashLoading(true)
+    setDashData(null)
+    try {
+      const sueldo = sueldos.find(s => s.user_id === emp.id)
+      if (!sueldo) { setDashLoading(false); return }
+
+      const diasMes = getDaysInMonth(new Date(anio, mes))
+      const fichajesData = await Promise.all(
+        Array.from({ length: diasMes }, (_, i) => {
+          const d = format(new Date(anio, mes, i + 1), "yyyy-MM-dd")
+          return authFetch(`${API}/fichajes?fecha=${d}&hotel_id=${HOTEL_ID}`).then(r => r.json())
+        })
+      )
+
+      const fichajes = fichajesData.flat().filter((f: any) => f.user_id === emp.id)
+
+      let totalMinsTrabajados = 0
+      let totalMinsExtra = 0
+
+      fichajes.forEach((f: any) => {
+        if (!f.hora_entrada || !f.hora_salida) return
+        const [hE, mE] = f.hora_entrada.split(":").map(Number)
+        const [hS, mS] = f.hora_salida.split(":").map(Number)
+        const mins = (hS * 60 + mS) - (hE * 60 + mE)
+        if (mins <= 0) return
+
+        totalMinsTrabajados += mins
+
+        if (sueldo.tipo_empleado === "fijo" && sueldo.horas_diarias) {
+          const minutosEsperados = sueldo.horas_diarias * 60
+          const extra = mins - minutosEsperados
+          if (extra > 0) totalMinsExtra += extra
+        }
+      })
+
+      const precioMinuto = sueldo.sueldo_por_hora / 60
+
+      let totalExtra = 0
+      let total = 0
+
+      if (sueldo.tipo_empleado === "fijo") {
+        totalExtra = totalMinsExtra * precioMinuto
+        total = sueldo.sueldo_fijo + totalExtra
+      } else {
+        // temporal: paga por todos los minutos trabajados
+        total = totalMinsTrabajados * precioMinuto
+      }
+
+      setDashData({
+        sueldo_fijo:           sueldo.sueldo_fijo,
+        horas_extra_mins:      totalMinsExtra,
+        horas_trabajadas_mins: totalMinsTrabajados,
+        total_extra:           Math.round(totalExtra),
+        total:                 Math.round(total),
+        tipo_empleado:         sueldo.tipo_empleado,
+        sueldo_por_hora:       sueldo.sueldo_por_hora,
+        horas_diarias:         sueldo.horas_diarias || null,
+      })
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setDashLoading(false)
+    }
+  }
+
+  function abrirDashboard(emp: Empleado) {
+    setEmpleadoDashboard(emp)
+    setDashboardOpen(true)
+    calcularDashboard(emp, dashMes, dashAnio)
   }
 
   function abrirCrear() {
@@ -86,7 +180,7 @@ export default function EmpleadosPage() {
       role:          emp.role,
       categoria:     emp.categoria || "",
       fecha_ingreso: emp.fecha_ingreso ? emp.fecha_ingreso.slice(0, 10) : "",
-      username: emp.email || "",
+      username:      emp.email || "",
     })
     setModalOpen(true)
   }
@@ -97,15 +191,17 @@ export default function EmpleadosPage() {
     setFormSueldo({
       sueldo_fijo:     s ? s.sueldo_fijo.toString() : "0",
       sueldo_por_hora: s ? s.sueldo_por_hora.toString() : "0",
+      tipo_empleado:   s ? (s.tipo_empleado || "temporal") : "temporal",
+      horas_diarias:   s?.horas_diarias ? s.horas_diarias.toString() : "",
     })
     setSueldoOpen(true)
   }
 
   async function handleGuardar() {
     if (!form.name) {
-  toast.error("El nombre es obligatorio")
-  return
-}
+      toast.error("El nombre es obligatorio")
+      return
+    }
     if (!editando && !form.password) {
       toast.error("La contraseña es obligatoria para nuevos empleados")
       return
@@ -167,6 +263,8 @@ export default function EmpleadosPage() {
           user_id:         empleadoSueldo.id,
           sueldo_fijo:     parseFloat(formSueldo.sueldo_fijo) || 0,
           sueldo_por_hora: parseFloat(formSueldo.sueldo_por_hora) || 0,
+          tipo_empleado:   formSueldo.tipo_empleado,
+          horas_diarias:   formSueldo.horas_diarias ? parseFloat(formSueldo.horas_diarias) : null,
         }),
       })
       toast.success("Sueldo guardado")
@@ -180,6 +278,14 @@ export default function EmpleadosPage() {
   }
 
   const campo = (key: string, value: string) => setForm(f => ({ ...f, [key]: value }))
+
+  const formatMins = (mins: number) => {
+    const h = Math.floor(mins / 60)
+    const m = mins % 60
+    return `${h}h ${m}m`
+  }
+
+  const anios = Array.from({ length: 3 }, (_, i) => hoy.getFullYear() - 1 + i)
 
   return (
     <div className="flex flex-col gap-6">
@@ -209,14 +315,14 @@ export default function EmpleadosPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nombre</TableHead>
-                  <TableHead>Email</TableHead>
+                  <TableHead>Usuario</TableHead>
                   <TableHead>Teléfono</TableHead>
                   <TableHead>Categoría</TableHead>
-                  <TableHead>Rol</TableHead>
+                  <TableHead>Tipo</TableHead>
                   <TableHead>Ingreso</TableHead>
                   <TableHead>Sueldo</TableHead>
                   <TableHead>Estado</TableHead>
-                  <TableHead className="w-[100px]"></TableHead>
+                  <TableHead className="w-[120px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -233,9 +339,14 @@ export default function EmpleadosPage() {
                           : "—"}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={emp.role === "admin" ? "default" : "secondary"}>
-                          {emp.role === "admin" ? "Admin" : "Empleado"}
-                        </Badge>
+                        {sueldo ? (
+                          <Badge style={{
+                            backgroundColor: sueldo.tipo_empleado === "fijo" ? "#3b82f6" : "#f59e0b",
+                            color: "#fff"
+                          }}>
+                            {sueldo.tipo_empleado === "fijo" ? "Fijo" : "Temporal"}
+                          </Badge>
+                        ) : "—"}
                       </TableCell>
                       <TableCell className="text-sm">
                         {emp.fecha_ingreso
@@ -245,8 +356,15 @@ export default function EmpleadosPage() {
                       <TableCell className="text-sm">
                         {sueldo ? (
                           <div className="flex flex-col">
-                            {sueldo.sueldo_fijo > 0 && <span>${sueldo.sueldo_fijo.toLocaleString("es-AR")} fijo</span>}
-                            {sueldo.sueldo_por_hora > 0 && <span>${sueldo.sueldo_por_hora.toLocaleString("es-AR")}/hr</span>}
+                            {sueldo.tipo_empleado === "fijo" && sueldo.sueldo_fijo > 0 && (
+                              <span>${sueldo.sueldo_fijo.toLocaleString("es-AR")} fijo</span>
+                            )}
+                            {sueldo.sueldo_por_hora > 0 && (
+                              <span>${sueldo.sueldo_por_hora.toLocaleString("es-AR")}/hr extra</span>
+                            )}
+                            {sueldo.tipo_empleado === "fijo" && sueldo.horas_diarias && (
+                              <span className="text-muted-foreground">{sueldo.horas_diarias}hs/día</span>
+                            )}
                           </div>
                         ) : "—"}
                       </TableCell>
@@ -262,6 +380,9 @@ export default function EmpleadosPage() {
                           </Button>
                           <Button variant="ghost" size="sm" onClick={() => abrirSueldo(emp)}>
                             <DollarSign className="size-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => abrirDashboard(emp)}>
+                            <BarChart2 className="size-4" />
                           </Button>
                           <Button variant="ghost" size="sm" onClick={() => handleToggleActivo(emp)}>
                             {emp.active
@@ -287,13 +408,17 @@ export default function EmpleadosPage() {
           </DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <div className="col-span-2 flex flex-col gap-2">
-  <Label>Usuario (para login) *</Label>
-  <Input value={form.username} onChange={e => campo("username", e.target.value)} placeholder="Ej: maria.garcia" />
-</div>
-<div className="col-span-2 flex flex-col gap-2">
-  <Label>Email</Label>
-  <Input type="email" value={form.email} onChange={e => campo("email", e.target.value)} placeholder="empleado@hotel.com" />
-</div>
+              <Label>Nombre completo *</Label>
+              <Input value={form.name} onChange={e => campo("name", e.target.value)} placeholder="Ej: María García" />
+            </div>
+            <div className="col-span-2 flex flex-col gap-2">
+              <Label>Usuario (para login) *</Label>
+              <Input value={form.username} onChange={e => campo("username", e.target.value)} placeholder="Ej: maria.garcia" />
+            </div>
+            <div className="col-span-2 flex flex-col gap-2">
+              <Label>Email</Label>
+              <Input type="email" value={form.email} onChange={e => campo("email", e.target.value)} placeholder="empleado@hotel.com" />
+            </div>
             <div className="flex flex-col gap-2">
               <Label>{editando ? "Nueva contraseña (opcional)" : "Contraseña *"}</Label>
               <Input type="password" value={form.password} onChange={e => campo("password", e.target.value)} placeholder="••••••••" />
@@ -342,25 +467,64 @@ export default function EmpleadosPage() {
           </DialogHeader>
           <div className="flex flex-col gap-4 py-2">
             <div className="flex flex-col gap-2">
-              <Label>Sueldo fijo mensual ($)</Label>
-              <Input
-                type="number"
-                placeholder="0"
-                value={formSueldo.sueldo_fijo}
-                onChange={e => setFormSueldo(f => ({ ...f, sueldo_fijo: e.target.value }))}
-              />
+              <Label>Tipo de empleado</Label>
+              <Select value={formSueldo.tipo_empleado} onValueChange={v => setFormSueldo(f => ({ ...f, tipo_empleado: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fijo">Fijo</SelectItem>
+                  <SelectItem value="temporal">Temporal</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div className="flex flex-col gap-2">
-              <Label>Sueldo por hora ($)</Label>
-              <Input
-                type="number"
-                placeholder="0"
-                value={formSueldo.sueldo_por_hora}
-                onChange={e => setFormSueldo(f => ({ ...f, sueldo_por_hora: e.target.value }))}
-              />
-            </div>
+
+            {formSueldo.tipo_empleado === "fijo" && (
+              <>
+                <div className="flex flex-col gap-2">
+                  <Label>Sueldo fijo mensual ($)</Label>
+                  <Input
+                    type="number"
+                    placeholder="0"
+                    value={formSueldo.sueldo_fijo}
+                    onChange={e => setFormSueldo(f => ({ ...f, sueldo_fijo: e.target.value }))}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Carga horaria diaria (horas)</Label>
+                  <Input
+                    type="number"
+                    placeholder="Ej: 8"
+                    value={formSueldo.horas_diarias}
+                    onChange={e => setFormSueldo(f => ({ ...f, horas_diarias: e.target.value }))}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Precio hora extra ($)</Label>
+                  <Input
+                    type="number"
+                    placeholder="0"
+                    value={formSueldo.sueldo_por_hora}
+                    onChange={e => setFormSueldo(f => ({ ...f, sueldo_por_hora: e.target.value }))}
+                  />
+                </div>
+              </>
+            )}
+
+            {formSueldo.tipo_empleado === "temporal" && (
+              <div className="flex flex-col gap-2">
+                <Label>Precio por hora ($)</Label>
+                <Input
+                  type="number"
+                  placeholder="0"
+                  value={formSueldo.sueldo_por_hora}
+                  onChange={e => setFormSueldo(f => ({ ...f, sueldo_por_hora: e.target.value }))}
+                />
+              </div>
+            )}
+
             <p className="text-xs text-muted-foreground">
-              Podés cargar fijo, por hora, o ambos. Las horas se calculan automáticamente con los fichajes.
+              {formSueldo.tipo_empleado === "fijo"
+                ? "Las horas que superen la carga horaria diaria se cobran como horas extra."
+                : "Se cobra por cada minuto trabajado según los fichajes del mes."}
             </p>
           </div>
           <DialogFooter>
@@ -368,6 +532,108 @@ export default function EmpleadosPage() {
             <Button onClick={handleGuardarSueldo} disabled={guardando}>
               {guardando ? "Guardando..." : "Guardar sueldo"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal dashboard empleado */}
+      <Dialog open={dashboardOpen} onOpenChange={setDashboardOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Resumen — {empleadoDashboard?.name}</DialogTitle>
+          </DialogHeader>
+
+          {/* Selector de mes */}
+          <div className="flex gap-2">
+            <Select value={dashMes.toString()} onValueChange={v => {
+              const m = parseInt(v)
+              setDashMes(m)
+              if (empleadoDashboard) calcularDashboard(empleadoDashboard, m, dashAnio)
+            }}>
+              <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {MESES.map((m, i) => <SelectItem key={i} value={i.toString()}>{m}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={dashAnio.toString()} onValueChange={v => {
+              const a = parseInt(v)
+              setDashAnio(a)
+              if (empleadoDashboard) calcularDashboard(empleadoDashboard, dashMes, a)
+            }}>
+              <SelectTrigger className="w-[90px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {anios.map(a => <SelectItem key={a} value={a.toString()}>{a}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {dashLoading ? (
+            <div className="flex flex-col gap-3 py-4">
+              {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+            </div>
+          ) : !dashData ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">No hay datos de sueldo configurados para este empleado.</p>
+          ) : (
+            <div className="flex flex-col gap-4 py-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Tipo</span>
+                <Badge style={{
+                  backgroundColor: dashData.tipo_empleado === "fijo" ? "#3b82f6" : "#f59e0b",
+                  color: "#fff"
+                }}>
+                  {dashData.tipo_empleado === "fijo" ? "Fijo" : "Temporal"}
+                </Badge>
+              </div>
+
+              <Separator />
+
+              {dashData.tipo_empleado === "fijo" ? (
+                <>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Sueldo fijo</span>
+                    <span className="font-semibold">${dashData.sueldo_fijo.toLocaleString("es-AR")}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Carga horaria diaria</span>
+                    <span className="font-semibold">{dashData.horas_diarias}hs</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Horas extra acumuladas</span>
+                    <span className="font-semibold">{formatMins(dashData.horas_extra_mins)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Precio hora extra</span>
+                    <span className="font-semibold">${dashData.sueldo_por_hora.toLocaleString("es-AR")}/hr</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Total horas extra</span>
+                    <span className="font-semibold text-blue-600">${dashData.total_extra.toLocaleString("es-AR")}</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Total horas trabajadas</span>
+                    <span className="font-semibold">{formatMins(dashData.horas_trabajadas_mins)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Precio por hora</span>
+                    <span className="font-semibold">${dashData.sueldo_por_hora.toLocaleString("es-AR")}/hr</span>
+                  </div>
+                </>
+              )}
+
+              <Separator />
+
+              <div className="flex justify-between">
+                <span className="font-bold">Sueldo total del mes</span>
+                <span className="font-bold text-xl text-green-600">${dashData.total.toLocaleString("es-AR")}</span>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDashboardOpen(false)}>Cerrar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
