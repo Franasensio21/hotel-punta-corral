@@ -61,7 +61,8 @@ def get_or_create_label(service, label_name):
 
 
 def get_unprocessed_emails(service, max_results=20):
-    fecha_limite = (date.today() - timedelta(days=5)).strftime("%Y/%m/%d")
+    dias = int(os.getenv("DIAS_LIMITE", "5"))
+    fecha_limite = (date.today() - timedelta(days=dias)).strftime("%Y/%m/%d")
     query = (
         f"-label:{LABEL_PROCESADO} "
         f"in:inbox "
