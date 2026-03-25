@@ -178,11 +178,9 @@ export default function EmpleadosPage() {
     setDashLoading(true);
     setDashData(null);
     try {
-      const mesActual = new Date().getMonth() + 1
-const anioActual = new Date().getFullYear()
-const sueldosEmpleado = sueldos.filter(s => s.user_id === emp.id)
-const sueldo = sueldosEmpleado.find(s => s.mes === mesActual && s.anio === anioActual)
-  || sueldosEmpleado
+      const sueldosEmpleado = sueldos.filter(s => s.user_id === emp.id)
+      const sueldo = sueldosEmpleado.find(s => s.mes === (mes + 1) && s.anio === anio)
+      || sueldosEmpleado
       .filter(s => s.anio !== null)
       .sort((a, b) => (b.anio || 0) - (a.anio || 0) || (b.mes || 0) - (a.mes || 0))[0]
   || sueldosEmpleado[0]
@@ -442,7 +440,11 @@ const sueldo = sueldosEmpleado.find(s => s.mes === mesActual && s.anio === anioA
               </TableHeader>
               <TableBody>
                 {empleados.map((emp) => {
-                  const sueldo = sueldos.find((s) => s.user_id === emp.id);
+                  const mesActual = new Date().getMonth() + 1
+                  const anioActual = new Date().getFullYear()
+                  const sueldo = sueldos.find(s => s.user_id === emp.id && s.mes === mesActual && s.anio === anioActual)
+                    || sueldos.filter(s => s.user_id === emp.id)
+                    .sort((a, b) => (b.anio || 0) - (a.anio || 0) || (b.mes || 0) - (a.mes || 0))[0]
                   return (
                     <TableRow
                       key={emp.id}
