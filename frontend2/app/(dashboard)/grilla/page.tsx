@@ -345,18 +345,22 @@ export default function GrillaPage() {
                 }}
 
                 style={{
-                  width: 36, minWidth: 36, height: 26,
-                  backgroundColor: enSel
-                    ? "#e0e7ff"
-                    : ocupada && canalInfo
-                      ? canalInfo.color
-                      : esFinDeSemana(dia) ? "#fafafa" : "#ffffff",
-                  border: enSel
-                    ? "1px solid #a5b4fc"
-                    : `1px solid ${COLOR_BORDER}`,
-                  cursor: ocupada ? "pointer" : "crosshair",
-                }}
-              />
+  width: 36, minWidth: 36, height: 26,
+  backgroundColor: enSel
+    ? "#e0e7ff"
+    : ocupada && canalInfo
+      ? canalInfo.color
+      : esFinDeSemana(dia) ? "#fafafa" : "#ffffff",
+  border: enSel
+    ? "1px solid #a5b4fc"
+    : `1px solid ${COLOR_BORDER}`,
+  cursor: ocupada ? "pointer" : "crosshair",
+  fontSize: 9, fontWeight: 700, textAlign: "center" as const,
+  color: "#374151",
+}}
+>
+  {hab.numero}
+</td>
             )
           })}
         </tr>
