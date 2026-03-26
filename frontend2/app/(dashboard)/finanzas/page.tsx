@@ -85,6 +85,7 @@ interface SueldoCalc {
   sueldo_por_hora: number;
   horas_trabajadas: number;
   total: number;
+  tipo_empleado?: string;
 }
 
 export default function FinanzasPage() {
@@ -130,27 +131,22 @@ export default function FinanzasPage() {
       const fechaDesde = format(new Date(anio, mes, 1), "yyyy-MM-dd");
       const fechaHasta = format(new Date(anio, mes, diasMes), "yyyy-MM-dd");
 
-      const [gastosRaw, sueldosData, reservasRaw, fichajesData] =
-        await Promise.all([
-          authFetch(
-            `${API}/gastos?mes=${mes + 1}&anio=${anio}&hotel_id=${HOTEL_ID}`,
-          ).then((r) => r.json()),
-          authFetch(`${API}/sueldos?hotel_id=${HOTEL_ID}`).then((r) =>
-            r.json(),
-          ),
-          authFetch(
-            `${API}/reservas?hotel_id=${HOTEL_ID}&desde=${fechaDesde}&hasta=${fechaHasta}`,
-          ).then((r) => r.json()),
-          // Fichajes: traer todos los del mes de una sola vez
-          Promise.all(
-            Array.from({ length: diasMes }, (_, i) => {
-              const d = format(new Date(anio, mes, i + 1), "yyyy-MM-dd");
-              return authFetch(
-                `${API}/fichajes?fecha=${d}&hotel_id=${HOTEL_ID}`,
-              ).then((r) => r.json());
-            }),
-          ),
-        ]);
+      // Mes anterior para calcular horas (las horas de febrero se pagan en marzo)
+      const mesAnterior = mes === 0 ? 11 : mes - 1;
+      const anioAnterior = mes === 0 ? anio - 1 : anio;
+      const diasMesAnterior = getDaysInMonth(new Date(anioAnterior, mesAnterior));
+
+      const [gastosRaw, sueldosData, reservasRaw] = await Promise.all([
+        authFetch(
+          `${API}/gastos?mes=${mes + 1}&anio=${anio}&hotel_id=${HOTEL_ID}`,
+        ).then((r) => r.json()),
+        authFetch(`${API}/sueldos/historial?hotel_id=${HOTEL_ID}`).then((r) =>
+          r.json(),
+        ),
+        authFetch(
+          `${API}/reservas?hotel_id=${HOTEL_ID}&desde=${fechaDesde}&hasta=${fechaHasta}`,
+        ).then((r) => r.json()),
+      ]);
 
       const gastosData: Gasto[] = Array.isArray(gastosRaw)
         ? gastosRaw
@@ -159,11 +155,10 @@ export default function FinanzasPage() {
 
       const reservas: any[] = Array.isArray(reservasRaw) ? reservasRaw : [];
 
-      // Calcular ingresos: reservas con precio_total directo, sino por precio de habitación
+      // ── Calcular ingresos ──────────────────────────────────────────────
       let totalIngresosMes = 0;
       const detalleTemp: Record<string, any> = {};
 
-      // Reservas con precio_total cargado
       const reservasConPrecio = reservas.filter(
         (r) => r.precio_total && r.status !== "cancelled",
       );
@@ -189,7 +184,6 @@ export default function FinanzasPage() {
         detalleTemp[key].subtotal += parseFloat(r.precio_total);
       }
 
-      // Reservas sin precio_total: calcular día por día
       if (reservasSinPrecio.length > 0) {
         await Promise.all(
           Array.from({ length: diasMes }, async (_, i) => {
@@ -203,7 +197,6 @@ export default function FinanzasPage() {
               ) || [];
 
             for (const hab of ocupadas) {
-              // Solo procesar si la reserva no tiene precio_total
               const reserva = reservasSinPrecio.find(
                 (r: any) => r.room_id === hab.room_id,
               );
@@ -266,37 +259,98 @@ export default function FinanzasPage() {
       );
       setIngresosMes(totalIngresosMes);
 
-      // Calcular horas por empleado
-      const fichajesMes = fichajesData.flat();
-      const horasPorEmpleado: Record<number, number> = {};
-      fichajesMes.forEach((f: any) => {
+      // ── Calcular sueldos usando fichajes del MES ANTERIOR ─────────────
+      const sueldosArray: any[] = Array.isArray(sueldosData)
+        ? sueldosData
+        : (sueldosData?.items ?? sueldosData?.sueldos ?? []);
+
+      // Traer fichajes del mes anterior
+      const fichajesMesAnteriorData = await Promise.all(
+        Array.from({ length: diasMesAnterior }, (_, i) => {
+          const d = format(new Date(anioAnterior, mesAnterior, i + 1), "yyyy-MM-dd");
+          return authFetch(
+            `${API}/fichajes?fecha=${d}&hotel_id=${HOTEL_ID}`,
+          ).then((r) => r.json());
+        }),
+      );
+
+      const fichajesFlat = fichajesMesAnteriorData.flat();
+
+      // Calcular minutos por empleado distinguiendo fijos de temporales
+      const minsTrabajadosPorEmpleado: Record<number, number> = {};
+      const minsExtraPorEmpleado: Record<number, number> = {};
+
+      fichajesFlat.forEach((f: any) => {
         if (!f.hora_entrada || !f.hora_salida) return;
         const [hE, mE] = f.hora_entrada.split(":").map(Number);
         const [hS, mS] = f.hora_salida.split(":").map(Number);
         const mins = hS * 60 + mS - (hE * 60 + mE);
-        if (mins > 0)
-          horasPorEmpleado[f.user_id] =
-            (horasPorEmpleado[f.user_id] || 0) + mins;
+        if (mins <= 0) return;
+
+        minsTrabajadosPorEmpleado[f.user_id] =
+          (minsTrabajadosPorEmpleado[f.user_id] || 0) + mins;
+
+        // Para empleados fijos: calcular solo los minutos que superan la carga horaria
+        const sueldo = sueldosArray.find((s: any) => s.user_id === f.user_id);
+        if (sueldo?.tipo_empleado === "fijo" && sueldo?.horas_diarias) {
+          const minutosEsperados = sueldo.horas_diarias * 60;
+          const extra = mins - minutosEsperados;
+          if (extra > 0) {
+            minsExtraPorEmpleado[f.user_id] =
+              (minsExtraPorEmpleado[f.user_id] || 0) + extra;
+          }
+        }
       });
 
-      const sueldosArray: any[] = Array.isArray(sueldosData)
-        ? sueldosData
-        : (sueldosData?.items ?? sueldosData?.sueldos ?? []);
-      const calcSueldos: SueldoCalc[] = sueldosArray
-        .filter((s: any) => s.activo)
-        .map((s: any) => {
-          const horas = (horasPorEmpleado[s.user_id] || 0) / 60;
-          const total = s.sueldo_fijo + horas * s.sueldo_por_hora;
-          return {
-            user_id: s.user_id,
-            name: s.name,
-            categoria: s.categoria,
-            sueldo_fijo: s.sueldo_fijo,
-            sueldo_por_hora: s.sueldo_por_hora,
-            horas_trabajadas: Math.round(horas * 10) / 10,
-            total: Math.round(total),
-          };
-        });
+      // Buscar sueldo del mes actual para cada empleado
+      const getSueldoDelMes = (userId: number) => {
+        const sueldosEmpleado = sueldosArray.filter((s: any) => s.user_id === userId);
+        return (
+          sueldosEmpleado.find((s: any) => s.mes === mes + 1 && s.anio === anio) ||
+          sueldosEmpleado
+            .filter((s: any) => s.anio !== null)
+            .sort(
+              (a: any, b: any) =>
+                (b.anio || 0) - (a.anio || 0) || (b.mes || 0) - (a.mes || 0),
+            )[0] ||
+          sueldosEmpleado[0]
+        );
+      };
+
+      // Obtener usuarios únicos con sueldo activo
+      const userIds = [...new Set(sueldosArray.filter((s: any) => s.activo).map((s: any) => s.user_id))];
+
+      const calcSueldos: SueldoCalc[] = userIds.map((userId: any) => {
+        const sueldo = getSueldoDelMes(userId);
+        if (!sueldo) return null;
+
+        let total = 0;
+        let horasMostrar = 0;
+
+        if (sueldo.tipo_empleado === "fijo") {
+          // Fijo: sueldo fijo + horas extra del mes anterior
+          const minsExtra = minsExtraPorEmpleado[userId] || 0;
+          horasMostrar = Math.round((minsExtra / 60) * 10) / 10;
+          total = sueldo.sueldo_fijo + minsExtra * (sueldo.sueldo_por_hora / 60);
+        } else {
+          // Temporal: todas las horas trabajadas del mes anterior
+          const minsTrabajados = minsTrabajadosPorEmpleado[userId] || 0;
+          horasMostrar = Math.round((minsTrabajados / 60) * 10) / 10;
+          total = minsTrabajados * (sueldo.sueldo_por_hora / 60);
+        }
+
+        return {
+          user_id: userId,
+          name: sueldo.name,
+          categoria: sueldo.categoria,
+          sueldo_fijo: sueldo.sueldo_fijo || 0,
+          sueldo_por_hora: sueldo.sueldo_por_hora || 0,
+          horas_trabajadas: horasMostrar,
+          total: Math.round(total),
+          tipo_empleado: sueldo.tipo_empleado,
+        };
+      }).filter(Boolean) as SueldoCalc[];
+
       setSueldos(calcSueldos);
     } catch (e) {
       console.error(e);
@@ -312,7 +366,6 @@ export default function FinanzasPage() {
     }
     setGuardando(true);
     try {
-      // FIX 3: options estaban fuera del llamado a authFetch — ahora están dentro
       await authFetch(`${API}/gastos?hotel_id=${HOTEL_ID}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -342,7 +395,6 @@ export default function FinanzasPage() {
   }
 
   async function handleEliminarGasto(id: number) {
-    // FIX 4: igual que arriba, options estaban fuera del llamado
     await authFetch(`${API}/gastos/${id}?hotel_id=${HOTEL_ID}`, {
       method: "DELETE",
     });
@@ -353,6 +405,7 @@ export default function FinanzasPage() {
   const totalGastos = gastos.reduce((sum, g) => sum + Number(g.monto), 0);
   const totalSueldos = sueldos.reduce((sum, s) => sum + s.total, 0);
   const totalEgresos = totalGastos + totalSueldos;
+  const mesAnteriorNombre = MESES[mes === 0 ? 11 : mes - 1];
 
   const anios = Array.from({ length: 3 }, (_, i) => hoy.getFullYear() - 1 + i);
 
@@ -575,7 +628,12 @@ export default function FinanzasPage() {
       {/* Sueldos */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Sueldos del mes</CardTitle>
+          <CardTitle className="text-base">
+            Sueldos del mes
+            <span className="text-xs font-normal text-muted-foreground ml-2">
+              (horas de {mesAnteriorNombre})
+            </span>
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -594,8 +652,9 @@ export default function FinanzasPage() {
                 <TableRow>
                   <TableHead>Empleado</TableHead>
                   <TableHead>Categoría</TableHead>
+                  <TableHead>Tipo</TableHead>
                   <TableHead>Sueldo fijo</TableHead>
-                  <TableHead>Horas trabajadas</TableHead>
+                  <TableHead>Hs extra / trabajadas</TableHead>
                   <TableHead>$/hora</TableHead>
                   <TableHead>Total</TableHead>
                 </TableRow>
@@ -614,7 +673,20 @@ export default function FinanzasPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      ${s.sueldo_fijo.toLocaleString("es-AR")}
+                      <Badge
+                        style={{
+                          backgroundColor:
+                            s.tipo_empleado === "fijo" ? "#3b82f6" : "#f59e0b",
+                          color: "#fff",
+                        }}
+                      >
+                        {s.tipo_empleado === "fijo" ? "Fijo" : "Temporal"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {s.tipo_empleado === "fijo"
+                        ? `$${s.sueldo_fijo.toLocaleString("es-AR")}`
+                        : "—"}
                     </TableCell>
                     <TableCell>
                       {s.horas_trabajadas > 0 ? `${s.horas_trabajadas}h` : "—"}
@@ -633,7 +705,7 @@ export default function FinanzasPage() {
                   </TableRow>
                 ))}
                 <TableRow>
-                  <TableCell colSpan={5} className="font-bold text-right">
+                  <TableCell colSpan={6} className="font-bold text-right">
                     Total sueldos
                   </TableCell>
                   <TableCell className="font-bold" style={{ color: "#f59e0b" }}>
