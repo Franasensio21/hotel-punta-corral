@@ -66,3 +66,12 @@ def require_superadmin(current_user=Depends(get_current_user)):
     if current_user.role != "superadmin":
         raise HTTPException(status_code=403, detail="Se requiere rol de superadmin")
     return current_user
+
+def get_hotel_id(current_user=Depends(get_current_user)) -> int:
+    """Retorna el hotel_id del usuario autenticado desde el token JWT."""
+    if not current_user.hotel_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Usuario sin hotel asignado"
+        )
+    return current_user.hotel_id
