@@ -174,83 +174,79 @@ export default function EmpleadosPage() {
     }
   }
 
-  async function calcularDashboard(emp: Empleado, mes: number, anio: number) {
-    setDashLoading(true);
-    setDashData(null);
-    try {
-      const sueldosEmpleado = sueldos.filter(s => s.user_id === emp.id)
-      const sueldo = sueldosEmpleado.find(s => s.mes === (mes + 1) && s.anio === anio)
+async function calcularDashboard(emp: Empleado, mes: number, anio: number) {
+  setDashLoading(true)
+  setDashData(null)
+  try {
+    const sueldosEmpleado = sueldos.filter(s => s.user_id === emp.id)
+    const sueldo = sueldosEmpleado.find(s => s.mes === (mes + 1) && s.anio === anio)
       || sueldosEmpleado
-      .filter(s => s.anio !== null)
-      .sort((a, b) => (b.anio || 0) - (a.anio || 0) || (b.mes || 0) - (a.mes || 0))[0]
-  || sueldosEmpleado[0]
-      if (!sueldo) {
-        setDashLoading(false);
-        return;
+          .filter(s => s.anio !== null)
+          .sort((a, b) => (b.anio || 0) - (a.anio || 0) || (b.mes || 0) - (a.mes || 0))[0]
+      || sueldosEmpleado[0]
+
+    if (!sueldo) { setDashLoading(false); return }
+
+    // Fichajes del MES ANTERIOR
+    const mesAnterior = mes === 0 ? 11 : mes - 1
+    const anioAnterior = mes === 0 ? anio - 1 : anio
+    const diasMesAnterior = getDaysInMonth(new Date(anioAnterior, mesAnterior))
+
+    const fichajesData = await Promise.all(
+      Array.from({ length: diasMesAnterior }, (_, i) => {
+        const d = format(new Date(anioAnterior, mesAnterior, i + 1), "yyyy-MM-dd")
+        return authFetch(`${API}/fichajes?fecha=${d}&hotel_id=${HOTEL_ID}`).then(r => r.json())
+      })
+    )
+
+    const fichajes = fichajesData.flat().filter((f: any) => f.user_id === emp.id)
+
+    let totalMinsTrabajados = 0
+    let totalMinsExtra = 0
+
+    fichajes.forEach((f: any) => {
+      if (!f.hora_entrada || !f.hora_salida) return
+      const [hE, mE] = f.hora_entrada.split(":").map(Number)
+      const [hS, mS] = f.hora_salida.split(":").map(Number)
+      const mins = (hS * 60 + mS) - (hE * 60 + mE)
+      if (mins <= 0) return
+
+      totalMinsTrabajados += mins
+
+      if (sueldo.tipo_empleado === "fijo" && sueldo.horas_diarias) {
+        const minutosEsperados = sueldo.horas_diarias * 60
+        const extra = mins - minutosEsperados
+        if (extra > 0) totalMinsExtra += extra
       }
+    })
 
-      const diasMes = getDaysInMonth(new Date(anio, mes));
-      const fichajesData = await Promise.all(
-        Array.from({ length: diasMes }, (_, i) => {
-          const d = format(new Date(anio, mes, i + 1), "yyyy-MM-dd");
-          return authFetch(
-            `${API}/fichajes?fecha=${d}&hotel_id=${HOTEL_ID}`,
-          ).then((r) => r.json());
-        }),
-      );
+    const precioMinuto = sueldo.sueldo_por_hora / 60
+    let totalExtra = 0
+    let total = 0
 
-      const fichajes = fichajesData
-        .flat()
-        .filter((f: any) => f.user_id === emp.id);
-
-      let totalMinsTrabajados = 0;
-      let totalMinsExtra = 0;
-
-      fichajes.forEach((f: any) => {
-        if (!f.hora_entrada || !f.hora_salida) return;
-        const [hE, mE] = f.hora_entrada.split(":").map(Number);
-        const [hS, mS] = f.hora_salida.split(":").map(Number);
-        const mins = hS * 60 + mS - (hE * 60 + mE);
-        if (mins <= 0) return;
-
-        totalMinsTrabajados += mins;
-
-        if (sueldo.tipo_empleado === "fijo" && sueldo.horas_diarias) {
-          const minutosEsperados = sueldo.horas_diarias * 60;
-          const extra = mins - minutosEsperados;
-          if (extra > 0) totalMinsExtra += extra;
-        }
-      });
-
-      const precioMinuto = sueldo.sueldo_por_hora / 60;
-
-      let totalExtra = 0;
-      let total = 0;
-
-      if (sueldo.tipo_empleado === "fijo") {
-        totalExtra = totalMinsExtra * precioMinuto;
-        total = sueldo.sueldo_fijo + totalExtra;
-      } else {
-        // temporal: paga por todos los minutos trabajados
-        total = totalMinsTrabajados * precioMinuto;
-      }
-
-      setDashData({
-        sueldo_fijo: sueldo.sueldo_fijo,
-        horas_extra_mins: totalMinsExtra,
-        horas_trabajadas_mins: totalMinsTrabajados,
-        total_extra: Math.round(totalExtra),
-        total: Math.round(total),
-        tipo_empleado: sueldo.tipo_empleado,
-        sueldo_por_hora: sueldo.sueldo_por_hora,
-        horas_diarias: sueldo.horas_diarias || null,
-      });
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setDashLoading(false);
+    if (sueldo.tipo_empleado === "fijo") {
+      totalExtra = totalMinsExtra * precioMinuto
+      total = sueldo.sueldo_fijo + totalExtra
+    } else {
+      total = totalMinsTrabajados * precioMinuto
     }
+
+    setDashData({
+      sueldo_fijo:           sueldo.sueldo_fijo,
+      horas_extra_mins:      totalMinsExtra,
+      horas_trabajadas_mins: totalMinsTrabajados,
+      total_extra:           Math.round(totalExtra),
+      total:                 Math.round(total),
+      tipo_empleado:         sueldo.tipo_empleado,
+      sueldo_por_hora:       sueldo.sueldo_por_hora,
+      horas_diarias:         sueldo.horas_diarias || null,
+    })
+  } catch (e) {
+    console.error(e)
+  } finally {
+    setDashLoading(false)
   }
+}
 
   function abrirDashboard(emp: Empleado) {
     setEmpleadoDashboard(emp);
