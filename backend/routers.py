@@ -9,6 +9,7 @@ from .database import get_db
 from .config import settings
 from . import auth as auth_module
 from .auth import get_current_user, require_admin, hash_password
+from .auth import get_current_user, require_admin, hash_password, get_hotel_id
 
 
 # Router público — sin autenticación (solo login)
@@ -162,7 +163,7 @@ def get_habitaciones(
 
 
 @router.get("/habitaciones/overrides", tags=["Habitaciones"])
-def get_overrides(hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def get_overrides(hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
     result = db.execute(text("""
         SELECT o.*, r.number as numero
@@ -175,7 +176,7 @@ def get_overrides(hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session 
 
 
 @router.post("/habitaciones/overrides", status_code=201, tags=["Habitaciones"])
-def create_override(data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def create_override(data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
     db.execute(text("""
         INSERT INTO habitaciones_override 
@@ -196,7 +197,7 @@ def create_override(data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID)
 
 
 @router.delete("/habitaciones/overrides/{override_id}", tags=["Habitaciones"])
-def delete_override(override_id: int, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def delete_override(override_id: int, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
     db.execute(text("DELETE FROM habitaciones_override WHERE id = :id AND hotel_id = :hotel_id"), {"id": override_id, "hotel_id": hotel_id})
     db.commit()
@@ -215,7 +216,7 @@ def get_habitacion(room_id: int, db: Session = Depends(get_db)):
     return room
 
 @router.patch("/habitaciones/{room_id}", tags=["Habitaciones"])
-def update_habitacion(room_id: int, data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def update_habitacion(room_id: int, data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
     campos = []
     params = {"id": room_id, "hotel_id": hotel_id}
@@ -284,7 +285,7 @@ def get_cliente(guest_id: int, db: Session = Depends(get_db)):
     return guest
 
 @router.patch("/clientes/{guest_id}", tags=["Clientes"])
-def update_cliente(guest_id: int, data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def update_cliente(guest_id: int, data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
     guest = db.query(models.Guest).filter(models.Guest.id == guest_id, models.Guest.hotel_id == hotel_id).first()
     if not guest:
@@ -298,7 +299,7 @@ def update_cliente(guest_id: int, data: dict, hotel_id: int = Query(settings.DEF
 
 
 @router.delete("/clientes/{guest_id}", tags=["Clientes"])
-def delete_cliente(guest_id: int, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def delete_cliente(guest_id: int, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     guest = db.query(models.Guest).filter(models.Guest.id == guest_id, models.Guest.hotel_id == hotel_id).first()
     if not guest:
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
@@ -422,7 +423,7 @@ def cancelar_reserva(
     return {"ok": True, "id": res.id, "status": res.status}
 
 @router.delete("/reservas/{reserva_id}/borrar", tags=["Reservas"])
-def borrar_reserva(reserva_id: int, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def borrar_reserva(reserva_id: int, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
     db.execute(text("DELETE FROM reservations WHERE id = :id AND hotel_id = :hotel_id"), 
                {"id": reserva_id, "hotel_id": hotel_id})
@@ -474,7 +475,7 @@ def crear_grupo(
     tags=["Grupos"],
 )
 def get_grupos(
-    hotel_id: int = Query(settings.DEFAULT_HOTEL_ID),
+    hotel_id: int = Depends(get_hotel_id),
     db: Session   = Depends(get_db),
 ):
     return (
@@ -504,7 +505,7 @@ def get_precios(
     return [dict(row._mapping) for row in result]
 
 @router.post("/precios", status_code=201, tags=["Precios"])
-def create_precio(data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def create_precio(data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
     db.execute(text("""
         INSERT INTO precios (hotel_id, tipo, fecha_desde, fecha_hasta, precio_noche, precio_grupo)
@@ -528,7 +529,7 @@ def create_precio(data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), 
 )
 def delete_precio(
     precio_id: int,
-    hotel_id: int = Query(settings.DEFAULT_HOTEL_ID),
+    hotel_id: int = Depends(get_hotel_id),
     db: Session = Depends(get_db),
 ):
     from sqlalchemy import text
@@ -625,7 +626,7 @@ def logout():
 
 @router.get("/usuarios", tags=["Usuarios"])
 def get_usuarios(
-    hotel_id: int = Query(settings.DEFAULT_HOTEL_ID),
+    hotel_id: int = Depends(get_hotel_id),
     db: Session = Depends(get_db),
 ):
     from sqlalchemy import text
@@ -639,7 +640,7 @@ def get_usuarios(
 
 
 @router.post("/usuarios", status_code=201, tags=["Usuarios"])
-def create_usuario(data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def create_usuario(data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
     db.execute(text("""
         INSERT INTO users (hotel_id, name, email, phone, password_hash, role, categoria, fecha_ingreso)
@@ -659,7 +660,7 @@ def create_usuario(data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID),
 
 
 @router.patch("/usuarios/{user_id}", tags=["Usuarios"])
-def update_usuario(user_id: int, data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def update_usuario(user_id: int, data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
     campos = []
     params = {"id": user_id, "hotel_id": hotel_id}
@@ -678,7 +679,7 @@ def update_usuario(user_id: int, data: dict, hotel_id: int = Query(settings.DEFA
 
 
 @router.delete("/usuarios/{user_id}", tags=["Usuarios"])
-def deactivate_usuario(user_id: int, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def deactivate_usuario(user_id: int, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
     db.execute(text("UPDATE users SET active = false WHERE id = :id AND hotel_id = :hotel_id"), {"id": user_id, "hotel_id": hotel_id})
     db.commit()
@@ -692,7 +693,7 @@ def deactivate_usuario(user_id: int, hotel_id: int = Query(settings.DEFAULT_HOTE
 @router.get("/fichajes", tags=["Fichajes"])
 def get_fichajes(
     fecha: date = Query(date.today()),
-    hotel_id: int = Query(settings.DEFAULT_HOTEL_ID),
+    hotel_id: int = Depends(get_hotel_id),
     db: Session = Depends(get_db),
 ):
     from sqlalchemy import text
@@ -708,7 +709,7 @@ def get_fichajes(
 
 
 @router.post("/fichajes", status_code=201, tags=["Fichajes"])
-def create_fichaje(data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def create_fichaje(data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
     db.execute(text("""
         INSERT INTO fichajes (hotel_id, user_id, fecha, hora_entrada, hora_salida, notas)
@@ -727,7 +728,7 @@ def create_fichaje(data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID),
 
 
 @router.patch("/fichajes/{fichaje_id}", tags=["Fichajes"])
-def update_fichaje(fichaje_id: int, data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def update_fichaje(fichaje_id: int, data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
     campos = []
     params = {"id": fichaje_id, "hotel_id": hotel_id}
@@ -750,7 +751,7 @@ def update_fichaje(fichaje_id: int, data: dict, hotel_id: int = Query(settings.D
 def get_gastos(
     mes: int = Query(None),
     anio: int = Query(None),
-    hotel_id: int = Query(settings.DEFAULT_HOTEL_ID),
+    hotel_id: int = Depends(get_hotel_id),
     db: Session = Depends(get_db),
 ):
     from sqlalchemy import text
@@ -769,7 +770,7 @@ def get_gastos(
 
 
 @router.post("/gastos", status_code=201, tags=["Gastos"])
-def create_gasto(data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def create_gasto(data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
     db.execute(text("""
         INSERT INTO gastos (hotel_id, fecha, descripcion, monto, categoria, notas)
@@ -787,7 +788,7 @@ def create_gasto(data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), d
 
 
 @router.delete("/gastos/{gasto_id}", tags=["Gastos"])
-def delete_gasto(gasto_id: int, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def delete_gasto(gasto_id: int, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
     db.execute(text("DELETE FROM gastos WHERE id = :id AND hotel_id = :hotel_id"), {"id": gasto_id, "hotel_id": hotel_id})
     db.commit()
@@ -800,7 +801,7 @@ def delete_gasto(gasto_id: int, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID)
 
 @router.get("/sueldos", tags=["Sueldos"])
 def get_sueldos(
-    hotel_id: int = Query(settings.DEFAULT_HOTEL_ID),
+    hotel_id: int = Depends(get_hotel_id),
     mes: int = Query(None),
     anio: int = Query(None),
     db: Session = Depends(get_db)
@@ -831,7 +832,7 @@ def get_sueldos(
 
 
 @router.post("/sueldos", status_code=201, tags=["Sueldos"])
-def create_sueldo(data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def create_sueldo(data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
     import datetime
     hoy = datetime.date.today()
@@ -859,7 +860,7 @@ def create_sueldo(data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), 
 
 
 @router.get("/sueldos/historial", tags=["Sueldos"])
-def get_sueldos_historial(hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def get_sueldos_historial(hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
     result = db.execute(text("""
         SELECT s.id, s.user_id, u.name, u.categoria, s.sueldo_fijo, s.sueldo_por_hora,
@@ -875,14 +876,14 @@ def get_sueldos_historial(hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: 
 # ══════════════════════════════════════════════════════════════
 
 @router.get("/configuracion", tags=["Configuracion"])
-def get_configuracion(hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def get_configuracion(hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
     result = db.execute(text("SELECT * FROM configuracion WHERE hotel_id = :hotel_id"), {"hotel_id": hotel_id}).fetchall()
     return [dict(r._mapping) for r in result]
 
 
 @router.patch("/configuracion/{clave}", tags=["Configuracion"])
-def update_configuracion(clave: str, data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def update_configuracion(clave: str, data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
     db.execute(text("""
         INSERT INTO configuracion (hotel_id, clave, valor)
@@ -897,7 +898,7 @@ def update_configuracion(clave: str, data: dict, hotel_id: int = Query(settings.
 # ══════════════════════════════════════════════════════════════
 
 @router.get("/grupos", tags=["Grupos"])
-def get_grupos(hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def get_grupos(hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
     result = db.execute(text("""
         SELECT g.*, 
@@ -913,7 +914,7 @@ def get_grupos(hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = D
 
 
 @router.post("/grupos", status_code=201, tags=["Grupos"])
-def create_grupo(data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def create_grupo(data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
     result = db.execute(text("""
         INSERT INTO groups (hotel_id, name, contact_name, contact_email, contact_phone, 
@@ -938,7 +939,7 @@ def create_grupo(data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), d
 
 
 @router.patch("/grupos/{grupo_id}", tags=["Grupos"])
-def update_grupo(grupo_id: int, data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def update_grupo(grupo_id: int, data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
     campos = []
     params = {"id": grupo_id, "hotel_id": hotel_id}
@@ -972,7 +973,7 @@ def update_grupo(grupo_id: int, data: dict, hotel_id: int = Query(settings.DEFAU
     return {"ok": True}
 
 @router.delete("/grupos/{grupo_id}", tags=["Grupos"])
-def delete_grupo(grupo_id: int, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def delete_grupo(grupo_id: int, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
     # Cancelar todas las reservas del grupo
     db.execute(text("""
@@ -986,7 +987,7 @@ def delete_grupo(grupo_id: int, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID)
     return {"ok": True}
 
 @router.get("/grupos/{grupo_id}/habitaciones", tags=["Grupos"])
-def get_grupo_habitaciones(grupo_id: int, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def get_grupo_habitaciones(grupo_id: int, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
     result = db.execute(text("""
         SELECT r.id as reserva_id, r.room_id, r.check_in, r.check_out, r.status,
@@ -1002,7 +1003,7 @@ def get_grupo_habitaciones(grupo_id: int, hotel_id: int = Query(settings.DEFAULT
 
 
 @router.post("/grupos/{grupo_id}/habitaciones", status_code=201, tags=["Grupos"])
-def asignar_habitacion_grupo(grupo_id: int, data: dict, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def asignar_habitacion_grupo(grupo_id: int, data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
     grupo = db.execute(text("SELECT * FROM groups WHERE id = :id AND hotel_id = :hotel_id"),
                        {"id": grupo_id, "hotel_id": hotel_id}).fetchone()
@@ -1045,7 +1046,7 @@ def asignar_habitacion_grupo(grupo_id: int, data: dict, hotel_id: int = Query(se
 
 
 @router.delete("/grupos/{grupo_id}/habitaciones/{reserva_id}", tags=["Grupos"])
-def desasignar_habitacion_grupo(grupo_id: int, reserva_id: int, hotel_id: int = Query(settings.DEFAULT_HOTEL_ID), db: Session = Depends(get_db)):
+def desasignar_habitacion_grupo(grupo_id: int, reserva_id: int, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
     db.execute(text("""
         UPDATE reservations SET status = 'cancelled' 
@@ -1058,7 +1059,7 @@ def desasignar_habitacion_grupo(grupo_id: int, reserva_id: int, hotel_id: int = 
 def mover_reserva(
     reserva_id: int,
     data: dict,
-    hotel_id: int = Query(settings.DEFAULT_HOTEL_ID),
+    hotel_id: int = Depends(get_hotel_id),
     db: Session = Depends(get_db)
 ):
     from sqlalchemy import text
