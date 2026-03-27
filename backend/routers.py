@@ -1287,4 +1287,5 @@ def create_hotel(data: dict, db: Session = Depends(get_db)):
         return {"ok": True, "hotel_id": hotel_id}
     except Exception as e:
         db.rollback()
+        print(f"ERROR CREATE HOTEL: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error al registrar: {str(e)}")
