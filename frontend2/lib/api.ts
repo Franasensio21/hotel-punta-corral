@@ -9,7 +9,7 @@ import type {
 } from "./types"
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-const HOTEL_ID = getUser()?.hotel_id ?? 1
+const HOTEL_ID = (typeof window !== "undefined" ? getUser()?.hotel_id : null) ?? 1
 
 class ApiClient {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {

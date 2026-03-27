@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { authFetch } from "@/lib/auth"
 
 const API = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api/v1"
-const HOTEL_ID = getUser()?.hotel_id ?? 1
+const HOTEL_ID = (typeof window !== "undefined" ? getUser()?.hotel_id : null) ?? 1
 
 const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
 
