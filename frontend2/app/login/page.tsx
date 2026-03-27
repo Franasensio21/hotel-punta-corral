@@ -1,45 +1,52 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Building2, Eye, EyeOff } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { login } from "@/lib/auth"
-import { toast } from "sonner"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Building2, Eye, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { login } from "@/lib/auth";
+import { toast } from "sonner";
 
 export default function LoginPage() {
-  const router = useRouter()
-  const [email, setEmail]       = useState("")
-  const [password, setPassword] = useState("")
-  const [showPass, setShowPass] = useState(false)
-  const [loading, setLoading]   = useState(false)
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault()
-  if (!email || !password) {
-    toast.error("Completá todos los campos")
-    return
-  }
-  setLoading(true)
-  try {
-    const user = await login(email, password)
-    // Redirigir según categoría
-    if (user.categoria === "mucama") {
-      window.location.href = "/mucama"
-    } else if (user.categoria === "recepcionista") {
-      window.location.href = "/recepcionista"
-    } else {
-      window.location.href = "/"
+    e.preventDefault();
+    if (!email || !password) {
+      toast.error("Completá todos los campos");
+      return;
     }
-  } catch (err: any) {
-    toast.error(err.message || "Error al iniciar sesión")
-  } finally {
-    setLoading(false)
-  }
-}
+    setLoading(true);
+    try {
+      const user = await login(email, password);
+      if (user.role === "superadmin") {
+        window.location.href = "/sys/admin";
+      } else if (user.categoria === "mucama") {
+        window.location.href = "/mucama";
+      } else if (user.categoria === "recepcionista") {
+        window.location.href = "/recepcionista";
+      } else {
+        window.location.href = "/";
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Error al iniciar sesión");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
@@ -59,7 +66,9 @@ export default function LoginPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Iniciar sesión</CardTitle>
-            <CardDescription>Ingresá tus credenciales para acceder</CardDescription>
+            <CardDescription>
+              Ingresá tus credenciales para acceder
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -70,7 +79,7 @@ export default function LoginPage() {
                   type="email"
                   placeholder="tu@email.com"
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
                   disabled={loading}
                 />
@@ -83,7 +92,7 @@ export default function LoginPage() {
                     type={showPass ? "text" : "password"}
                     placeholder="••••••••"
                     value={password}
-                    onChange={e => setPassword(e.target.value)}
+                    onChange={(e) => setPassword(e.target.value)}
                     autoComplete="current-password"
                     disabled={loading}
                     className="pr-10"
@@ -93,7 +102,11 @@ export default function LoginPage() {
                     onClick={() => setShowPass(!showPass)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
-                    {showPass ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    {showPass ? (
+                      <EyeOff className="size-4" />
+                    ) : (
+                      <Eye className="size-4" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -105,5 +118,5 @@ export default function LoginPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
