@@ -150,7 +150,7 @@ def get_disponibilidad_rango(
     tags=["Habitaciones"],
 )
 def get_habitaciones(
-    hotel_id: int            = Query(settings.DEFAULT_HOTEL_ID),
+    hotel_id: int            = Depends(get_hotel_id),
     tipo:     Optional[str]  = Query(None),
     activas:  Optional[bool] = Query(None),
     db:       Session        = Depends(get_db),
@@ -242,7 +242,7 @@ def update_habitacion(room_id: int, data: dict, hotel_id: int = Depends(get_hote
     tags=["Clientes"],
 )
 def get_clientes(
-    hotel_id: int           = Query(settings.DEFAULT_HOTEL_ID),
+    hotel_id: int           = Depends(get_hotel_id),
     search:   Optional[str] = Query(None, description="Buscar por nombre o email"),
     db:       Session       = Depends(get_db),
 ):
@@ -264,7 +264,7 @@ def get_clientes(
 )
 def create_cliente(
     data:     schemas.GuestCreate,
-    hotel_id: int     = Query(settings.DEFAULT_HOTEL_ID),
+    hotel_id: int     = Depends(get_hotel_id),
     db:       Session = Depends(get_db),
 ):
     guest = models.Guest(hotel_id=hotel_id, **data.model_dump())
@@ -325,7 +325,7 @@ def delete_cliente(guest_id: int, hotel_id: int = Depends(get_hotel_id), db: Ses
 )
 def crear_reserva(
     data:     schemas.ReservationCreate,
-    hotel_id: int     = Query(settings.DEFAULT_HOTEL_ID),
+    hotel_id: int     = Depends(get_hotel_id),
     db:       Session = Depends(get_db),
 ):
     """
@@ -350,7 +350,7 @@ def crear_reserva(
     tags=["Reservas"],
 )
 def get_reservas(
-    hotel_id:  int           = Query(settings.DEFAULT_HOTEL_ID),
+    hotel_id:  int           = Depends(get_hotel_id),
     status:    Optional[str] = Query(None, description="confirmed/pending/cancelled/no_show"),
     room_id:   Optional[int] = Query(None),
     desde:     Optional[date] = Query(None),
@@ -381,7 +381,7 @@ def get_reservas(
 def update_reserva(
     reservation_id: int,
     data:           schemas.ReservationUpdate,
-    hotel_id:       int     = Query(settings.DEFAULT_HOTEL_ID),
+    hotel_id:       int     = Depends(get_hotel_id),
     db:             Session = Depends(get_db),
 ):
     res = db.query(models.Reservation).filter(
@@ -412,7 +412,7 @@ def update_reserva(
 )
 def cancelar_reserva(
     reservation_id: int,
-    hotel_id:       int     = Query(settings.DEFAULT_HOTEL_ID),
+    hotel_id:       int     = Depends(get_hotel_id),
     db:             Session = Depends(get_db),
 ):
     """
@@ -459,7 +459,7 @@ def get_canales(db: Session = Depends(get_db)):
 )
 def crear_grupo(
     data:     schemas.GroupCreate,
-    hotel_id: int     = Query(settings.DEFAULT_HOTEL_ID),
+    hotel_id: int     = Depends(get_hotel_id),
     db:       Session = Depends(get_db),
 ):
     group = models.Group(hotel_id=hotel_id, **data.model_dump())
