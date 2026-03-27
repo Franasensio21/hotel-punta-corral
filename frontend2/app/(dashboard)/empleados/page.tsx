@@ -114,6 +114,7 @@ const emptyForm = {
   categoria: "",
   fecha_ingreso: "",
 };
+
 const emptySueldo = {
   sueldo_fijo: "",
   sueldo_por_hora: "",
@@ -141,7 +142,6 @@ export default function EmpleadosPage() {
   const [formSueldo, setFormSueldo] = useState(emptySueldo);
   const [guardando, setGuardando] = useState(false);
 
-  // Dashboard state
   const [dashMes, setDashMes] = useState(hoy.getMonth());
   const [dashAnio, setDashAnio] = useState(hoy.getFullYear());
   const [dashLoading, setDashLoading] = useState(false);
@@ -225,10 +225,6 @@ export default function EmpleadosPage() {
 
       let totalMinsTrabajados = 0;
       let totalMinsExtra = 0;
-      let diasAcumulados = 0;
-      if (sueldo.horas_extra_modalidad === "acumular" && sueldo.horas_diarias) {
-        diasAcumulados = Math.floor(totalMinsExtra / 60 / sueldo.horas_diarias);
-      }
 
       fichajes.forEach((f: any) => {
         if (!f.hora_entrada || !f.hora_salida) return;
@@ -246,13 +242,23 @@ export default function EmpleadosPage() {
         }
       });
 
+      // Calcular días acumulados DESPUÉS del loop
+      let diasAcumulados = 0;
+      if (sueldo.horas_extra_modalidad === "acumular" && sueldo.horas_diarias) {
+        diasAcumulados = Math.floor(totalMinsExtra / 60 / sueldo.horas_diarias);
+      }
+
       const precioMinuto = sueldo.sueldo_por_hora / 60;
       let totalExtra = 0;
       let total = 0;
 
       if (sueldo.tipo_empleado === "fijo") {
-        totalExtra = totalMinsExtra * precioMinuto;
-        total = sueldo.sueldo_fijo + totalExtra;
+        if (sueldo.horas_extra_modalidad === "acumular") {
+          total = sueldo.sueldo_fijo; // No suma horas extra al total
+        } else {
+          totalExtra = totalMinsExtra * precioMinuto;
+          total = sueldo.sueldo_fijo + totalExtra;
+        }
       } else {
         total = totalMinsTrabajados * precioMinuto;
       }
@@ -307,7 +313,6 @@ export default function EmpleadosPage() {
     setEmpleadoSueldo(emp);
     const mesActual = new Date().getMonth() + 1;
     const anioActual = new Date().getFullYear();
-    // Buscar sueldo del mes actual
     const s =
       sueldos.find(
         (s) =>
@@ -324,6 +329,7 @@ export default function EmpleadosPage() {
     });
     setSueldoOpen(true);
   }
+
   async function handleGuardar() {
     if (!form.name) {
       toast.error("El nombre es obligatorio");
@@ -554,6 +560,11 @@ export default function EmpleadosPage() {
                                   {sueldo.horas_diarias}hs/día
                                 </span>
                               )}
+                            {sueldo.horas_extra_modalidad === "acumular" && (
+                              <span className="text-xs text-blue-500">
+                                Acumula días
+                              </span>
+                            )}
                           </div>
                         ) : (
                           "—"
@@ -731,6 +742,7 @@ export default function EmpleadosPage() {
             <DialogTitle>Sueldo — {empleadoSueldo?.name}</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col gap-4 py-2">
+            {/* Selector mes/año */}
             <div className="flex gap-2">
               <div className="flex flex-col gap-2 flex-1">
                 <Label>Mes</Label>
@@ -759,6 +771,9 @@ export default function EmpleadosPage() {
                       horas_diarias: s?.horas_diarias
                         ? s.horas_diarias.toString()
                         : "",
+                      horas_extra_modalidad: s
+                        ? s.horas_extra_modalidad || "cobrar"
+                        : "cobrar",
                     }));
                   }}
                 >
@@ -801,6 +816,9 @@ export default function EmpleadosPage() {
                       horas_diarias: s?.horas_diarias
                         ? s.horas_diarias.toString()
                         : "",
+                      horas_extra_modalidad: s
+                        ? s.horas_extra_modalidad || "cobrar"
+                        : "cobrar",
                     }));
                   }}
                 >
@@ -817,6 +835,7 @@ export default function EmpleadosPage() {
                 </Select>
               </div>
             </div>
+
             <div className="flex flex-col gap-2">
               <Label>Tipo de empleado</Label>
               <Select
@@ -879,6 +898,25 @@ export default function EmpleadosPage() {
                     }
                   />
                 </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Horas extra</Label>
+                  <Select
+                    value={formSueldo.horas_extra_modalidad}
+                    onValueChange={(v) =>
+                      setFormSueldo((f) => ({ ...f, horas_extra_modalidad: v }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cobrar">Se cobran</SelectItem>
+                      <SelectItem value="acumular">
+                        Se acumulan como días libres
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </>
             )}
 
@@ -901,7 +939,7 @@ export default function EmpleadosPage() {
 
             <p className="text-xs text-muted-foreground">
               {formSueldo.tipo_empleado === "fijo"
-                ? "Las horas que superen la carga horaria diaria se cobran como horas extra."
+                ? "Las horas que superen la carga horaria diaria se cobran como horas extra o se acumulan como días libres."
                 : "Se cobra por cada minuto trabajado según los fichajes del mes."}
             </p>
           </div>
@@ -923,7 +961,6 @@ export default function EmpleadosPage() {
             <DialogTitle>Resumen — {empleadoDashboard?.name}</DialogTitle>
           </DialogHeader>
 
-          {/* Selector de mes */}
           <div className="flex gap-2">
             <Select
               value={dashMes.toString()}
