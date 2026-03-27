@@ -35,7 +35,7 @@ import { Badge } from "@/components/ui/badge";
 import type { Cliente, HabitacionDisponible } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { authFetch } from "@/lib/auth";
+import { authFetch, getUser } from "@/lib/auth";
 
 const API =
   (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api/v1";

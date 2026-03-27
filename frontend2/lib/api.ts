@@ -8,6 +8,8 @@ import type {
   FiltrosReserva,
 } from "./types"
 
+import { getUser } from "@/lib/auth"
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 const HOTEL_ID = (typeof window !== "undefined" ? getUser()?.hotel_id : null) ?? 1
 

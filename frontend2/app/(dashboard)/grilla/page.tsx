@@ -8,7 +8,7 @@ import { toast } from "sonner"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { authFetch } from "@/lib/auth"
+import { authFetch,getUser } from "@/lib/auth"
 
 const API = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api/v1"
 const HOTEL_ID = (typeof window !== "undefined" ? getUser()?.hotel_id : null) ?? 1

@@ -7,7 +7,7 @@ import { LogIn, LogOut, BedDouble } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { authFetch } from "@/lib/auth"
+import { authFetch, getUser } from "@/lib/auth"
 
 const API = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api/v1"
 const HOTEL_ID = (typeof window !== "undefined" ? getUser()?.hotel_id : null) ?? 1

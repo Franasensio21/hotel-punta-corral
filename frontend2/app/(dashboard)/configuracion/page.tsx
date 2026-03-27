@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
-import { authFetch } from "@/lib/auth"
+import { authFetch, getUser } from "@/lib/auth"
 
 const API = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api/v1"
 const HOTEL_ID = (typeof window !== "undefined" ? getUser()?.hotel_id : null) ?? 1
