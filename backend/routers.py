@@ -840,7 +840,7 @@ def create_sueldo(data: dict, hotel_id: int = Depends(get_hotel_id), db: Session
     anio = data.get("anio") or hoy.year
 
     db.execute(text("""
-        INSERT INTO sueldos (hotel_id, user_id, sueldo_fijo, sueldo_por_hora, tipo_empleado, horas_diarias, mes, anio)
+        INSERT INTO sueldos (hotel_id, user_id, sueldo_fijo, sueldo_por_hora, tipo_empleado, horas_diarias, mes, anio, horas_extra_modalidad)
         VALUES (:hotel_id, :user_id, :sueldo_fijo, :sueldo_por_hora, :tipo_empleado, :horas_diarias, :mes, :anio, :horas_extra_modalidad)
         ON CONFLICT (hotel_id, user_id, mes, anio) DO UPDATE
         SET sueldo_fijo = :sueldo_fijo, sueldo_por_hora = :sueldo_por_hora,
