@@ -44,7 +44,7 @@ function calcHoras(entrada: string | null, salida: string | null): string {
   if (!entrada || !salida) return "—"
   const [hE, mE] = entrada.split(":").map(Number)
   const [hS, mS] = salida.split(":").map(Number)
-  const minutos = (hS * 60 + mS) - (hE * 60 + mE)
+  const minutos = ((hS * 60 + mS) - (hE * 60 + mE) + 24 * 60) % (24 * 60)
   if (minutos <= 0) return "—"
   const h = Math.floor(minutos / 60)
   const m = minutos % 60

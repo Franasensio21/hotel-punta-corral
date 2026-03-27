@@ -284,7 +284,7 @@ export default function FinanzasPage() {
         if (!f.hora_entrada || !f.hora_salida) return;
         const [hE, mE] = f.hora_entrada.split(":").map(Number);
         const [hS, mS] = f.hora_salida.split(":").map(Number);
-        const mins = hS * 60 + mS - (hE * 60 + mE);
+        const mins = ((hS * 60 + mS) - (hE * 60 + mE) + 24 * 60) % (24 * 60)
         if (mins <= 0) return;
 
         minsTrabajadosPorEmpleado[f.user_id] =
