@@ -570,7 +570,9 @@ def consultar_precio(
 # ══════════════════════════════════════════════════════════════
 
 from fastapi.security import OAuth2PasswordRequestForm
-
+@public_router.get("/utils/hash", tags=["Utils"])
+def generate_hash(password: str = Query(...)):
+    return {"hash": hash_password(password)}
 @public_router.post("/auth/login", tags=["Auth"])
 def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
