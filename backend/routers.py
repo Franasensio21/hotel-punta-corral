@@ -816,7 +816,7 @@ def get_sueldos(
     result = db.execute(text("""
         SELECT DISTINCT ON (s.user_id)
                s.id, s.user_id, u.name, u.categoria, s.sueldo_fijo, s.sueldo_por_hora,
-               s.activo, s.tipo_empleado, s.horas_diarias, s.mes, s.anio
+               s.activo, s.tipo_empleado, s.horas_diarias, s.mes, s.anio, s.horas_extra_modalidad
         FROM sueldos s
         JOIN users u ON u.id = s.user_id
         WHERE s.hotel_id = :hotel_id
@@ -841,10 +841,11 @@ def create_sueldo(data: dict, hotel_id: int = Depends(get_hotel_id), db: Session
 
     db.execute(text("""
         INSERT INTO sueldos (hotel_id, user_id, sueldo_fijo, sueldo_por_hora, tipo_empleado, horas_diarias, mes, anio)
-        VALUES (:hotel_id, :user_id, :sueldo_fijo, :sueldo_por_hora, :tipo_empleado, :horas_diarias, :mes, :anio)
+        VALUES (:hotel_id, :user_id, :sueldo_fijo, :sueldo_por_hora, :tipo_empleado, :horas_diarias, :mes, :anio, :horas_extra_modalidad)
         ON CONFLICT (hotel_id, user_id, mes, anio) DO UPDATE
         SET sueldo_fijo = :sueldo_fijo, sueldo_por_hora = :sueldo_por_hora,
-            tipo_empleado = :tipo_empleado, horas_diarias = :horas_diarias
+            tipo_empleado = :tipo_empleado, horas_diarias = :horas_diarias,
+            horas_extra_modalidad = :horas_extra_modalidad        
     """), {
         "hotel_id":        hotel_id,
         "user_id":         data["user_id"],
@@ -852,8 +853,10 @@ def create_sueldo(data: dict, hotel_id: int = Depends(get_hotel_id), db: Session
         "sueldo_por_hora": data.get("sueldo_por_hora", 0),
         "tipo_empleado":   data.get("tipo_empleado", "temporal"),
         "horas_diarias":   data.get("horas_diarias"),
+        "horas_extra_modalidad": data.get("horas_extra_modalidad", "cobrar"),
         "mes":             mes,
         "anio":            anio,
+        
     })
     db.commit()
     return {"ok": True}
@@ -864,7 +867,7 @@ def get_sueldos_historial(hotel_id: int = Depends(get_hotel_id), db: Session = D
     from sqlalchemy import text
     result = db.execute(text("""
         SELECT s.id, s.user_id, u.name, u.categoria, s.sueldo_fijo, s.sueldo_por_hora,
-               s.activo, s.tipo_empleado, s.horas_diarias, s.mes, s.anio
+               s.activo, s.tipo_empleado, s.horas_diarias, s.mes, s.anio, s.horas_extra_modalidad
         FROM sueldos s
         JOIN users u ON u.id = s.user_id
         WHERE s.hotel_id = :hotel_id
