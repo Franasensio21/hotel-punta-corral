@@ -9,7 +9,7 @@ from .database import get_db
 from .config import settings
 from . import auth as auth_module
 from .auth import get_current_user, require_admin, hash_password
-from .auth import get_current_user, require_admin, hash_password, get_hotel_id
+from .auth import get_current_user, require_admin, hash_password, get_hotel_id, require_superadmin
 
 
 # Router público — sin autenticación (solo login)
@@ -18,7 +18,8 @@ public_router = APIRouter()
 # Router protegido — requiere token JWT
 router = APIRouter(dependencies=[Depends(get_current_user)])
 
-
+#Router del superadmin
+superadmin_router = APIRouter(dependencies=[Depends(require_superadmin)])
 # ══════════════════════════════════════════════════════════════
 # DISPONIBILIDAD
 # ══════════════════════════════════════════════════════════════
@@ -1099,3 +1100,191 @@ def mover_reserva(
     return {"ok": True}
 
 
+# ══════════════════════════════════════════════════════════════
+# SUPERADMIN
+# ══════════════════════════════════════════════════════════════
+
+@superadmin_router.get("/superadmin/hoteles", tags=["Superadmin"])
+def get_hoteles(db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    result = db.execute(text("""
+        SELECT h.id, h.name, h.slug, h.city, h.email, h.phone, h.active,
+               h.precio_mensual, h.sena_inicial, h.sena_pagada,
+               h.fecha_inicio, h.notas_internas, h.created_at,
+               COUNT(DISTINCT u.id) as total_usuarios,
+               COUNT(DISTINCT r.id) as total_reservas
+        FROM hotels h
+        LEFT JOIN users u ON u.hotel_id = h.id AND u.active = true
+        LEFT JOIN reservations r ON r.hotel_id = h.id
+        GROUP BY h.id
+        ORDER BY h.created_at DESC
+    """)).fetchall()
+    return [dict(r._mapping) for r in result]
+
+
+@superadmin_router.patch("/superadmin/hoteles/{hotel_id}", tags=["Superadmin"])
+def update_hotel(hotel_id: int, data: dict, db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    campos = []
+    params = {"id": hotel_id}
+    for field in ["name", "city", "email", "phone", "active", "precio_mensual",
+                  "sena_inicial", "sena_pagada", "fecha_inicio", "notas_internas"]:
+        if field in data:
+            campos.append(f"{field} = :{field}")
+            params[field] = data[field]
+    if not campos:
+        return {"ok": True}
+    db.execute(text(f"UPDATE hotels SET {', '.join(campos)} WHERE id = :id"), params)
+    db.commit()
+    return {"ok": True}
+
+
+@superadmin_router.get("/superadmin/hoteles/{hotel_id}/pagos", tags=["Superadmin"])
+def get_pagos_hotel(hotel_id: int, db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    result = db.execute(text("""
+        SELECT * FROM pagos_hoteles WHERE hotel_id = :hotel_id ORDER BY fecha DESC
+    """), {"hotel_id": hotel_id}).fetchall()
+    return [dict(r._mapping) for r in result]
+
+
+@superadmin_router.post("/superadmin/hoteles/{hotel_id}/pagos", status_code=201, tags=["Superadmin"])
+def create_pago_hotel(hotel_id: int, data: dict, db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    result = db.execute(text("""
+        INSERT INTO pagos_hoteles (hotel_id, tipo, monto, fecha, pagado, fecha_pago, notas)
+        VALUES (:hotel_id, :tipo, :monto, :fecha, :pagado, :fecha_pago, :notas)
+        RETURNING id
+    """), {
+        "hotel_id":  hotel_id,
+        "tipo":      data.get("tipo", "mensualidad"),
+        "monto":     data["monto"],
+        "fecha":     data.get("fecha"),
+        "pagado":    data.get("pagado", False),
+        "fecha_pago": data.get("fecha_pago"),
+        "notas":     data.get("notas"),
+    })
+    db.commit()
+    return {"ok": True, "id": result.fetchone()[0]}
+
+
+@superadmin_router.patch("/superadmin/pagos/{pago_id}", tags=["Superadmin"])
+def update_pago(pago_id: int, data: dict, db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    campos = []
+    params = {"id": pago_id}
+    for field in ["tipo", "monto", "fecha", "pagado", "fecha_pago", "notas"]:
+        if field in data:
+            campos.append(f"{field} = :{field}")
+            params[field] = data[field]
+    if not campos:
+        return {"ok": True}
+    db.execute(text(f"UPDATE pagos_hoteles SET {', '.join(campos)} WHERE id = :id"), params)
+    db.commit()
+    return {"ok": True}
+
+
+@superadmin_router.delete("/superadmin/pagos/{pago_id}", tags=["Superadmin"])
+def delete_pago(pago_id: int, db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    db.execute(text("DELETE FROM pagos_hoteles WHERE id = :id"), {"id": pago_id})
+    db.commit()
+    return {"ok": True}
+
+
+@superadmin_router.get("/superadmin/empleados", tags=["Superadmin"])
+def get_empleados_internos(db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    result = db.execute(text("SELECT * FROM empleados_internos ORDER BY nombre")).fetchall()
+    return [dict(r._mapping) for r in result]
+
+
+@superadmin_router.post("/superadmin/empleados", status_code=201, tags=["Superadmin"])
+def create_empleado_interno(data: dict, db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    db.execute(text("""
+        INSERT INTO empleados_internos (nombre, email, rol, notas)
+        VALUES (:nombre, :email, :rol, :notas)
+    """), {
+        "nombre": data["nombre"],
+        "email":  data.get("email"),
+        "rol":    data.get("rol"),
+        "notas":  data.get("notas"),
+    })
+    db.commit()
+    return {"ok": True}
+
+
+@superadmin_router.patch("/superadmin/empleados/{empleado_id}", tags=["Superadmin"])
+def update_empleado_interno(empleado_id: int, data: dict, db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    campos = []
+    params = {"id": empleado_id}
+    for field in ["nombre", "email", "rol", "activo", "notas"]:
+        if field in data:
+            campos.append(f"{field} = :{field}")
+            params[field] = data[field]
+    if not campos:
+        return {"ok": True}
+    db.execute(text(f"UPDATE empleados_internos SET {', '.join(campos)} WHERE id = :id"), params)
+    db.commit()
+    return {"ok": True}
+
+
+@superadmin_router.delete("/superadmin/empleados/{empleado_id}", tags=["Superadmin"])
+def delete_empleado_interno(empleado_id: int, db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    db.execute(text("DELETE FROM empleados_internos WHERE id = :id"), {"id": empleado_id})
+    db.commit()
+    return {"ok": True}
+
+@superadmin_router.post("/superadmin/hoteles", status_code=201, tags=["Superadmin"])
+def create_hotel(data: dict, db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    from datetime import datetime
+    import re
+
+    if not data.get("hotel_nombre") or not data.get("email") or not data.get("password"):
+        raise HTTPException(status_code=400, detail="Nombre, email y contraseña son obligatorios")
+
+    slug = re.sub(r'[^a-z0-9]+', '-', data["hotel_nombre"].lower()).strip('-')
+
+    existing = db.execute(text("SELECT id FROM users WHERE email = :email"), {"email": data["email"]}).fetchone()
+    if existing:
+        raise HTTPException(status_code=400, detail="Ya existe un usuario con ese email")
+
+    existing_hotel = db.execute(text("SELECT id FROM hotels WHERE slug = :slug"), {"slug": slug}).fetchone()
+    if existing_hotel:
+        slug = f"{slug}-{int(datetime.utcnow().timestamp())}"
+
+    try:
+        hotel = db.execute(text("""
+            INSERT INTO hotels (name, slug, city, email, phone, precio_mensual, sena_inicial, fecha_inicio)
+            VALUES (:name, :slug, :city, :email, :phone, :precio_mensual, :sena_inicial, :fecha_inicio)
+            RETURNING id
+        """), {
+            "name":           data["hotel_nombre"],
+            "slug":           slug,
+            "city":           data.get("ciudad", ""),
+            "email":          data["email"],
+            "phone":          data.get("telefono", ""),
+            "precio_mensual": data.get("precio_mensual"),
+            "sena_inicial":   data.get("sena_inicial"),
+            "fecha_inicio":   data.get("fecha_inicio"),
+        }).fetchone()
+        hotel_id = hotel[0]
+
+        db.execute(text("""
+            INSERT INTO users (hotel_id, name, email, password_hash, role)
+            VALUES (:hotel_id, :name, :email, :password_hash, 'admin')
+        """), {
+            "hotel_id":      hotel_id,
+            "name":          data.get("nombre_contacto", data["hotel_nombre"]),
+            "email":         data["email"],
+            "password_hash": hash_password(data["password"]),
+        })
+        db.commit()
+        return {"ok": True, "hotel_id": hotel_id}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error al registrar: {str(e)}")
