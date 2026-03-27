@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils"
 import { authFetch } from "@/lib/auth"
 
 const API = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api/v1"
-const HOTEL_ID = 1
+const HOTEL_ID = getUser()?.hotel_id ?? 1
 
 interface Fichaje {
   id:           number

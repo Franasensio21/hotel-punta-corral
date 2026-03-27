@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { authFetch } from "@/lib/auth"
 
 const API = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api/v1"
-const HOTEL_ID = 1
+const HOTEL_ID = getUser()?.hotel_id ?? 1
 
 const TIPO_LABELS: Record<string, string> = {
   double: "Doble", triple: "Triple", quad: "Cuádruple",

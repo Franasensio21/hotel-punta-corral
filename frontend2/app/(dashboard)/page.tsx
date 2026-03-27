@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { RoomGrid } from "@/components/dashboard/room-grid"
 import { RoomFilters } from "@/components/dashboard/room-filters"
 import { api } from "@/lib/api"
+import { getUser } from "@/lib/auth"
 import type { HabitacionDisponible, TipoHabitacion } from "@/lib/types"
 
 const LEYENDA = [
@@ -37,7 +38,7 @@ export default function DashboardPage() {
     const fecha = format(selectedDate, "yyyy-MM-dd")
     const [data, preciosData] = await Promise.all([
       api.getDisponibilidadPorFecha(fecha),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/precios?hotel_id=1`).then(r => r.json()),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/precios?hotel_id=${getUser()?.hotel_id ?? 1}`).then(r => r.json()),
     ])
     setHabitaciones(data)
     setPrecios(Array.isArray(preciosData) ? preciosData : [])

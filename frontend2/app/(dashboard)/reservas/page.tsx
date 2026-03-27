@@ -12,7 +12,7 @@ import { ReservationTable } from "@/components/reservations/reservation-table"
 import { api } from "@/lib/api"
 import type { Reserva, EstadoReserva, Cliente, HabitacionDisponible } from "@/lib/types"
 import { toast } from "sonner"
-import { authFetch } from "@/lib/auth"
+import { authFetch, getUser } from "@/lib/auth"
 
 export default function ReservasPage() {
   const [reservas, setReservas] = useState<Reserva[]>([])
@@ -64,7 +64,7 @@ export default function ReservasPage() {
   const handleBorrar = async () => {
   if (!borrarReserva) return
   try {
-    await authFetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/reservas/${borrarReserva.id}/borrar?hotel_id=1`, {
+    await authFetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/reservas/${borrarReserva.id}/borrar?hotel_id=${getUser()?.hotel_id ?? 1}`, {
       method: "DELETE"
     })
     toast.success("Reserva eliminada correctamente")
