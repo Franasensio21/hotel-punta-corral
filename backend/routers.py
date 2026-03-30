@@ -710,12 +710,12 @@ def get_fichajes(
 
 
 @router.post("/fichajes", status_code=201, tags=["Fichajes"])
+@router.post("/fichajes", status_code=201, tags=["Fichajes"])
 def create_fichaje(data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
     db.execute(text("""
         INSERT INTO fichajes (hotel_id, user_id, fecha, hora_entrada, hora_salida, notas)
         VALUES (:hotel_id, :user_id, :fecha, :hora_entrada, :hora_salida, :notas)
-        ON CONFLICT DO NOTHING
     """), {
         "hotel_id":     hotel_id,
         "user_id":      data["user_id"],
@@ -740,6 +740,14 @@ def update_fichaje(fichaje_id: int, data: dict, hotel_id: int = Depends(get_hote
     if not campos:
         return {"ok": True}
     db.execute(text(f"UPDATE fichajes SET {', '.join(campos)} WHERE id = :id AND hotel_id = :hotel_id"), params)
+    db.commit()
+    return {"ok": True}
+
+@router.delete("/fichajes/{fichaje_id}", tags=["Fichajes"])
+def delete_fichaje(fichaje_id: int, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    db.execute(text("DELETE FROM fichajes WHERE id = :id AND hotel_id = :hotel_id"), 
+               {"id": fichaje_id, "hotel_id": hotel_id})
     db.commit()
     return {"ok": True}
 
