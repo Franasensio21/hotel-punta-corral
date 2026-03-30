@@ -382,8 +382,10 @@ def update_reserva(
     reservation_id: int,
     data:           schemas.ReservationUpdate,
     hotel_id:       int     = Depends(get_hotel_id),
+    current_user=Depends(get_current_user),
     db:             Session = Depends(get_db),
 ):
+    from sqlalchemy import text
     res = db.query(models.Reservation).filter(
         models.Reservation.id       == reservation_id,
         models.Reservation.hotel_id == hotel_id,
@@ -391,17 +393,42 @@ def update_reserva(
     if not res:
         raise HTTPException(status_code=404, detail="Reserva no encontrada")
 
-    if data.status:
+    cambios = []
+
+    if data.status and data.status != res.status:
+        cambios.append(("estado", res.status, data.status))
         res.status = data.status
-    if data.notes is not None:
+
+    if data.notes is not None and data.notes != res.notes:
+        cambios.append(("notas", res.notes, data.notes))
         res.notes = data.notes
-    if data.precio_total is not None:
+
+    if data.precio_total is not None and data.precio_total != res.precio_total:
+        cambios.append(("precio_total", str(res.precio_total), str(data.precio_total)))
         res.precio_total = data.precio_total
-    if data.sena is not None:
+
+    if data.sena is not None and data.sena != res.sena:
+        cambios.append(("sena", str(res.sena), str(data.sena)))
         res.sena = data.sena
 
     db.commit()
     db.refresh(res)
+
+    # Registrar historial
+    for campo, anterior, nuevo in cambios:
+        db.execute(text("""
+            INSERT INTO historial_reservas (reservation_id, hotel_id, usuario_nombre, campo, valor_anterior, valor_nuevo)
+            VALUES (:reservation_id, :hotel_id, :usuario_nombre, :campo, :valor_anterior, :valor_nuevo)
+        """), {
+            "reservation_id": reservation_id,
+            "hotel_id":       hotel_id,
+            "usuario_nombre": current_user.name,
+            "campo":          campo,
+            "valor_anterior": anterior,
+            "valor_nuevo":    nuevo,
+        })
+    db.commit()
+
     return res
 
 
@@ -430,6 +457,34 @@ def borrar_reserva(reserva_id: int, hotel_id: int = Depends(get_hotel_id), db: S
                {"id": reserva_id, "hotel_id": hotel_id})
     db.commit()
     return {"ok": True}
+
+@router.post("/reservas/{reservation_id}/historial", status_code=201, tags=["Reservas"])
+def create_historial(reservation_id: int, data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    db.execute(text("""
+        INSERT INTO historial_reservas (reservation_id, hotel_id, usuario_nombre, campo, valor_anterior, valor_nuevo)
+        VALUES (:reservation_id, :hotel_id, :usuario_nombre, :campo, :valor_anterior, :valor_nuevo)
+    """), {
+        "reservation_id": reservation_id,
+        "hotel_id":       hotel_id,
+        "usuario_nombre": data.get("usuario_nombre"),
+        "campo":          data["campo"],
+        "valor_anterior": data.get("valor_anterior"),
+        "valor_nuevo":    data.get("valor_nuevo"),
+    })
+    db.commit()
+    return {"ok": True}
+
+
+@router.get("/reservas/{reservation_id}/historial", tags=["Reservas"])
+def get_historial(reservation_id: int, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    result = db.execute(text("""
+        SELECT * FROM historial_reservas
+        WHERE reservation_id = :reservation_id AND hotel_id = :hotel_id
+        ORDER BY created_at DESC
+    """), {"reservation_id": reservation_id, "hotel_id": hotel_id}).fetchall()
+    return [dict(r._mapping) for r in result]
 
 
 # ══════════════════════════════════════════════════════════════
