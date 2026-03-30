@@ -175,90 +175,95 @@ async deleteCliente(id: number): Promise<void> {
 
   // ==================== RESERVAS ====================
 
-  async getReservas(filtros?: FiltrosReserva): Promise<Reserva[]> {
-    const params = new URLSearchParams({ hotel_id: HOTEL_ID.toString() })
-    if (filtros?.estado) params.append("status", filtros.estado)
-    if (filtros?.fecha_desde) params.append("desde", filtros.fecha_desde)
-    if (filtros?.fecha_hasta) params.append("hasta", filtros.fecha_hasta)
+ async getReservas(filtros?: FiltrosReserva): Promise<Reserva[]> {
+  const params = new URLSearchParams({ hotel_id: HOTEL_ID.toString() })
+  if (filtros?.estado) params.append("status", filtros.estado)
+  if (filtros?.fecha_desde) params.append("desde", filtros.fecha_desde)
+  if (filtros?.fecha_hasta) params.append("hasta", filtros.fecha_hasta)
 
-    const data = await this.request<Array<{
-      id: number
-      room_id: number
-      guest_id: number | null
-      channel_id: number
-      check_in: string
-      check_out: string
-      status: string
-      notes: string | null
-      created_at: string
-    }>>(`/api/v1/reservas?${params}`)
+  const data = await this.request<Array<{
+    id: number
+    room_id: number
+    guest_id: number | null
+    channel_id: number
+    check_in: string
+    check_out: string
+    status: string
+    notes: string | null
+    precio_total: number | null
+    sena: number | null
+    created_at: string
+  }>>(`/api/v1/reservas?${params}`)
 
-    return data.map((r) => ({
-      id: r.id,
-      cliente_id: r.guest_id || 0,
-      habitacion_id: r.room_id,
-      fecha_checkin: r.check_in,
-      fecha_checkout: r.check_out,
-      precio_total: 0,
-      estado: r.status === "confirmed" ? "activa" : r.status === "cancelled" ? "cancelada" : "completada",
-      notas: r.notes || undefined,
-      created_at: r.created_at,
-      updated_at: r.created_at,
-    }))
+  return data.map((r) => ({
+    id: r.id,
+    cliente_id: r.guest_id || 0,
+    habitacion_id: r.room_id,
+    fecha_checkin: r.check_in,
+    fecha_checkout: r.check_out,
+    precio_total: r.precio_total ?? null,
+    sena: r.sena ?? null,
+    estado: r.status === "confirmed" ? "activa" : r.status === "cancelled" ? "cancelada" : "completada",
+    notas: r.notes || undefined,
+    created_at: r.created_at,
+    updated_at: r.created_at,
+  }))
+}
+
+async createReserva(data: ReservaForm): Promise<Reserva> {
+  const body = {
+    room_id: data.habitacion_id,
+    guest_id: data.cliente_id || null,
+    channel_id: 2,
+    check_in: data.fecha_checkin,
+    check_out: data.fecha_checkout,
+    notes: data.notas || null,
   }
+  const res = await this.request<{
+    id: number
+    room_id: number
+    guest_id: number | null
+    check_in: string
+    check_out: string
+    status: string
+    created_at: string
+  }>(`/api/v1/reservar?hotel_id=${HOTEL_ID}`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  })
 
-  async createReserva(data: ReservaForm): Promise<Reserva> {
-    const body = {
-      room_id: data.habitacion_id,
-      guest_id: data.cliente_id || null,
-      channel_id: 2, // directa por defecto
-      check_in: data.fecha_checkin,
-      check_out: data.fecha_checkout,
-      notes: data.notas || null,
-    }
-    const res = await this.request<{
-      id: number
-      room_id: number
-      guest_id: number | null
-      check_in: string
-      check_out: string
-      status: string
-      created_at: string
-    }>(`/api/v1/reservar?hotel_id=${HOTEL_ID}`, {
-      method: "POST",
-      body: JSON.stringify(body),
-    })
-
-    return {
-      id: res.id,
-      cliente_id: res.guest_id || 0,
-      habitacion_id: res.room_id,
-      fecha_checkin: res.check_in,
-      fecha_checkout: res.check_out,
-      precio_total: 0,
-      estado: "activa",
-      created_at: res.created_at,
-      updated_at: res.created_at,
-    }
+  return {
+    id: res.id,
+    cliente_id: res.guest_id || 0,
+    habitacion_id: res.room_id,
+    fecha_checkin: res.check_in,
+    fecha_checkout: res.check_out,
+    precio_total: null,
+    sena: null,
+    estado: "activa",
+    created_at: res.created_at,
+    updated_at: res.created_at,
   }
+}
 
-  async cancelarReserva(id: number): Promise<Reserva> {
-    const res = await this.request<{ id: number; status: string }>(
-      `/api/v1/reservas/${id}?hotel_id=${HOTEL_ID}`,
-      { method: "DELETE" }
-    )
-    return {
-      id: res.id,
-      cliente_id: 0,
-      habitacion_id: 0,
-      fecha_checkin: "",
-      fecha_checkout: "",
-      precio_total: 0,
-      estado: "cancelada",
-      created_at: "",
-      updated_at: "",
-    }
+async cancelarReserva(id: number): Promise<Reserva> {
+  const res = await this.request<{ id: number; status: string }>(
+    `/api/v1/reservas/${id}?hotel_id=${HOTEL_ID}`,
+    { method: "DELETE" }
+  )
+  return {
+    id: res.id,
+    cliente_id: 0,
+    habitacion_id: 0,
+    fecha_checkin: "",
+    fecha_checkout: "",
+    precio_total: null,
+    sena: null,
+    estado: "cancelada",
+    created_at: "",
+    updated_at: "",
   }
+}
 }
 
 export const api = new ApiClient()

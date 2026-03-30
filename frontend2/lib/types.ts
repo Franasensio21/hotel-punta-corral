@@ -45,7 +45,8 @@ export interface Reserva {
   habitacion_id: number
   fecha_checkin: string
   fecha_checkout: string
-  precio_total: number
+  precio_total?: number | null
+  sena?: number | null
   estado: EstadoReserva
   notas?: string
   created_at: string
