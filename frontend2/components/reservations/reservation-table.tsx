@@ -1,74 +1,107 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { format } from "date-fns"
-import { es } from "date-fns/locale"
-import { MoreHorizontal, XCircle, Trash2, Pencil } from "lucide-react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { toast } from "sonner"
-import { authFetch, getUser } from "@/lib/auth"
-import type { Reserva, Cliente, HabitacionDisponible } from "@/lib/types"
+import { useState } from "react";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { MoreHorizontal, XCircle, Trash2, Pencil, Clock } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { authFetch, getUser } from "@/lib/auth";
+import type { Reserva, Cliente, HabitacionDisponible } from "@/lib/types";
+import { Skeleton } from "@/components/ui/skeleton"
 
-const API = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api/v1"
+const API =
+  (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api/v1";
 
 interface ReservationTableProps {
-  reservas:     Reserva[]
-  clientes:     Record<number, Cliente>
-  habitaciones: Record<number, HabitacionDisponible>
-  onCancel:     (reserva: Reserva) => void
-  onBorrar:     (reserva: Reserva) => void
-  onRefresh:    () => void
+  reservas: Reserva[];
+  clientes: Record<number, Cliente>;
+  habitaciones: Record<number, HabitacionDisponible>;
+  onCancel: (reserva: Reserva) => void;
+  onBorrar: (reserva: Reserva) => void;
+  onRefresh: () => void;
 }
 
 function getEstado(reserva: Reserva): { label: string; color: string } {
-  if (reserva.estado === "cancelada") return { label: "Cancelada", color: "#ef4444" }
-  const hoy = new Date()
-  hoy.setHours(0, 0, 0, 0)
-  const checkout = new Date(reserva.fecha_checkout + "T12:00:00")
-  if (checkout < hoy) return { label: "Completada", color: "#6b7280" }
-  return { label: "Activa", color: "#22c55e" }
+  if (reserva.estado === "cancelada")
+    return { label: "Cancelada", color: "#ef4444" };
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const checkout = new Date(reserva.fecha_checkout + "T12:00:00");
+  if (checkout < hoy) return { label: "Completada", color: "#6b7280" };
+  return { label: "Activa", color: "#22c55e" };
 }
 
-export function ReservationTable({ reservas, clientes, habitaciones, onCancel, onBorrar, onRefresh }: ReservationTableProps) {
-  const [modalOpen, setModalOpen] = useState(false)
-  const [reservaEditando, setReservaEditando] = useState<Reserva | null>(null)
-  const [formPago, setFormPago] = useState({ precio_total: "", sena: "" })
-  const [guardando, setGuardando] = useState(false)
+export function ReservationTable({
+  reservas,
+  clientes,
+  habitaciones,
+  onCancel,
+  onBorrar,
+  onRefresh,
+}: ReservationTableProps) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [reservaEditando, setReservaEditando] = useState<Reserva | null>(null);
+  const [formPago, setFormPago] = useState({ precio_total: "", sena: "" });
+  const [guardando, setGuardando] = useState(false);
 
   function abrirEditar(r: Reserva) {
-    setReservaEditando(r)
+    setReservaEditando(r);
     setFormPago({
       precio_total: r.precio_total ? r.precio_total.toString() : "",
       sena: r.sena ? r.sena.toString() : "",
-    })
-    setModalOpen(true)
+    });
+    setModalOpen(true);
   }
 
   async function handleGuardarPago() {
-    if (!reservaEditando) return
-    setGuardando(true)
+    if (!reservaEditando) return;
+    setGuardando(true);
     try {
-      await authFetch(`${API}/reservas/${reservaEditando.id}?hotel_id=${getUser()?.hotel_id ?? 1}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          precio_total: formPago.precio_total ? parseFloat(formPago.precio_total) : null,
-          sena: formPago.sena ? parseFloat(formPago.sena) : null,
-        }),
-      })
-      toast.success("Pago actualizado")
-      setModalOpen(false)
-      onRefresh()
+      await authFetch(
+        `${API}/reservas/${reservaEditando.id}?hotel_id=${getUser()?.hotel_id ?? 1}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            precio_total: formPago.precio_total
+              ? parseFloat(formPago.precio_total)
+              : null,
+            sena: formPago.sena ? parseFloat(formPago.sena) : null,
+          }),
+        },
+      );
+      toast.success("Pago actualizado");
+      setModalOpen(false);
+      onRefresh();
     } catch (e) {
-      toast.error("Error al guardar")
+      toast.error("Error al guardar");
     } finally {
-      setGuardando(false)
+      setGuardando(false);
     }
   }
 
@@ -77,9 +110,29 @@ export function ReservationTable({ reservas, clientes, habitaciones, onCancel, o
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <p className="text-muted-foreground">No hay reservas para mostrar</p>
       </div>
-    )
+    );
   }
-
+  const [modalHistorial, setModalHistorial] = useState(false);
+  const [historial, setHistorial] = useState<any[]>([]);
+  const [loadingHistorial, setLoadingHistorial] = useState(false);
+  const [reservaHistorial, setReservaHistorial] = useState<Reserva | null>(
+    null,
+  );
+  async function verHistorial(r: Reserva) {
+    setReservaHistorial(r);
+    setModalHistorial(true);
+    setLoadingHistorial(true);
+    try {
+      const data = await authFetch(
+        `${API}/reservas/${r.id}/historial?hotel_id=${getUser()?.hotel_id ?? 1}`,
+      ).then((res) => res.json());
+      setHistorial(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingHistorial(false);
+    }
+  }
   return (
     <>
       <Table>
@@ -98,39 +151,59 @@ export function ReservationTable({ reservas, clientes, habitaciones, onCancel, o
         </TableHeader>
         <TableBody>
           {reservas.map((r) => {
-            const cliente    = clientes[r.cliente_id]
-            const habitacion = habitaciones[r.habitacion_id]
+            const cliente = clientes[r.cliente_id];
+            const habitacion = habitaciones[r.habitacion_id];
             const nombreCliente = cliente
               ? `${cliente.nombre} ${cliente.apellido}`.trim()
-              : "Sin cliente"
-            const numeroHab = habitacion ? habitacion.numero : `${r.habitacion_id}`
-            const estado    = getEstado(r)
-            const esActiva  = estado.label === "Activa"
+              : "Sin cliente";
+            const numeroHab = habitacion
+              ? habitacion.numero
+              : `${r.habitacion_id}`;
+            const estado = getEstado(r);
+            const esActiva = estado.label === "Activa";
 
-            const precioTotal = (r as any).precio_total
-            const sena = (r as any).sena
-            const senaPagada = sena && precioTotal && sena >= precioTotal * 0.3
+            const precioTotal = (r as any).precio_total;
+            const sena = (r as any).sena;
+            const senaPagada = sena && precioTotal && sena >= precioTotal * 0.3;
 
             return (
               <TableRow key={r.id}>
-                <TableCell className="font-medium text-muted-foreground">#{r.id}</TableCell>
+                <TableCell className="font-medium text-muted-foreground">
+                  #{r.id}
+                </TableCell>
                 <TableCell className="font-medium">{nombreCliente}</TableCell>
                 <TableCell className="font-semibold">{numeroHab}</TableCell>
                 <TableCell>
-                  {format(new Date(r.fecha_checkin + "T12:00:00"), "dd/MM/yyyy", { locale: es })}
+                  {format(
+                    new Date(r.fecha_checkin + "T12:00:00"),
+                    "dd/MM/yyyy",
+                    { locale: es },
+                  )}
                 </TableCell>
                 <TableCell>
-                  {format(new Date(r.fecha_checkout + "T12:00:00"), "dd/MM/yyyy", { locale: es })}
+                  {format(
+                    new Date(r.fecha_checkout + "T12:00:00"),
+                    "dd/MM/yyyy",
+                    { locale: es },
+                  )}
                 </TableCell>
                 <TableCell>
-                  {precioTotal
-                    ? <span className="font-semibold text-green-600">${Number(precioTotal).toLocaleString("es-AR")}</span>
-                    : <span className="text-muted-foreground text-xs">Sin cargar</span>}
+                  {precioTotal ? (
+                    <span className="font-semibold text-green-600">
+                      ${Number(precioTotal).toLocaleString("es-AR")}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground text-xs">
+                      Sin cargar
+                    </span>
+                  )}
                 </TableCell>
                 <TableCell>
                   {sena ? (
                     <div className="flex flex-col gap-0.5">
-                      <span className="font-semibold text-blue-600">${Number(sena).toLocaleString("es-AR")}</span>
+                      <span className="font-semibold text-blue-600">
+                        ${Number(sena).toLocaleString("es-AR")}
+                      </span>
                       <Badge
                         className="text-xs w-fit"
                         style={{
@@ -142,11 +215,15 @@ export function ReservationTable({ reservas, clientes, habitaciones, onCancel, o
                       </Badge>
                     </div>
                   ) : (
-                    <span className="text-muted-foreground text-xs">Sin seña</span>
+                    <span className="text-muted-foreground text-xs">
+                      Sin seña
+                    </span>
                   )}
                 </TableCell>
                 <TableCell>
-                  <Badge style={{ backgroundColor: estado.color, color: "#fff" }}>
+                  <Badge
+                    style={{ backgroundColor: estado.color, color: "#fff" }}
+                  >
                     {estado.label}
                   </Badge>
                 </TableCell>
@@ -168,6 +245,10 @@ export function ReservationTable({ reservas, clientes, habitaciones, onCancel, o
                           className="text-destructive focus:text-destructive"
                         >
                           <XCircle className="mr-2 size-4" />
+                          <DropdownMenuItem onClick={() => verHistorial(r)}>
+                            <Clock className="mr-2 size-4" />
+                            Ver historial
+                          </DropdownMenuItem>
                           Cancelar reserva
                         </DropdownMenuItem>
                       )}
@@ -182,7 +263,7 @@ export function ReservationTable({ reservas, clientes, habitaciones, onCancel, o
                   </DropdownMenu>
                 </TableCell>
               </TableRow>
-            )
+            );
           })}
         </TableBody>
       </Table>
@@ -191,7 +272,9 @@ export function ReservationTable({ reservas, clientes, habitaciones, onCancel, o
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Precio y seña — Reserva #{reservaEditando?.id}</DialogTitle>
+            <DialogTitle>
+              Precio y seña — Reserva #{reservaEditando?.id}
+            </DialogTitle>
           </DialogHeader>
           <div className="flex flex-col gap-4 py-2">
             <div className="flex flex-col gap-2">
@@ -200,7 +283,9 @@ export function ReservationTable({ reservas, clientes, habitaciones, onCancel, o
                 type="number"
                 placeholder="0"
                 value={formPago.precio_total}
-                onChange={e => setFormPago(f => ({ ...f, precio_total: e.target.value }))}
+                onChange={(e) =>
+                  setFormPago((f) => ({ ...f, precio_total: e.target.value }))
+                }
               />
             </div>
             <div className="flex flex-col gap-2">
@@ -209,23 +294,86 @@ export function ReservationTable({ reservas, clientes, habitaciones, onCancel, o
                 type="number"
                 placeholder="0"
                 value={formPago.sena}
-                onChange={e => setFormPago(f => ({ ...f, sena: e.target.value }))}
+                onChange={(e) =>
+                  setFormPago((f) => ({ ...f, sena: e.target.value }))
+                }
               />
             </div>
             {formPago.precio_total && formPago.sena && (
               <p className="text-xs text-muted-foreground">
-                Saldo pendiente: ${(parseFloat(formPago.precio_total) - parseFloat(formPago.sena)).toLocaleString("es-AR")}
+                Saldo pendiente: $
+                {(
+                  parseFloat(formPago.precio_total) - parseFloat(formPago.sena)
+                ).toLocaleString("es-AR")}
               </p>
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setModalOpen(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setModalOpen(false)}>
+              Cancelar
+            </Button>
             <Button onClick={handleGuardarPago} disabled={guardando}>
               {guardando ? "Guardando..." : "Guardar"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <Dialog open={modalHistorial} onOpenChange={setModalHistorial}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              Historial — Reserva #{reservaHistorial?.id}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-2 py-2 max-h-[400px] overflow-y-auto">
+            {loadingHistorial ? (
+              <div className="flex flex-col gap-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-10 w-full" />
+                ))}
+              </div>
+            ) : historial.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">
+                No hay cambios registrados para esta reserva
+              </p>
+            ) : (
+              historial.map((h, i) => (
+                <div key={i} className="flex flex-col gap-1 border-b pb-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium capitalize">
+                      {h.campo.replace("_", " ")}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {format(new Date(h.created_at), "dd/MM/yyyy HH:mm", {
+                        locale: es,
+                      })}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="text-muted-foreground">
+                      {h.valor_anterior || "—"}
+                    </span>
+                    <span>→</span>
+                    <span className="font-semibold">
+                      {h.valor_nuevo || "—"}
+                    </span>
+                  </div>
+                  {h.usuario_nombre && (
+                    <span className="text-xs text-muted-foreground">
+                      por {h.usuario_nombre}
+                    </span>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setModalHistorial(false)}>
+              Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
-  )
+  );
 }
