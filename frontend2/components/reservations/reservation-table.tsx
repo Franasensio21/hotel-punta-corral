@@ -245,13 +245,13 @@ export function ReservationTable({
                           className="text-destructive focus:text-destructive"
                         >
                           <XCircle className="mr-2 size-4" />
-                          <DropdownMenuItem onClick={() => verHistorial(r)}>
-                            <Clock className="mr-2 size-4" />
-                            Ver historial
-                          </DropdownMenuItem>
                           Cancelar reserva
                         </DropdownMenuItem>
                       )}
+                      <DropdownMenuItem onClick={() => verHistorial(r)}>
+                            <Clock className="mr-2 size-4" />
+                            Ver historial
+                          </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => onBorrar(r)}
                         className="text-destructive focus:text-destructive"
