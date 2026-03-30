@@ -43,10 +43,10 @@ import { format, getDaysInMonth } from "date-fns";
 import { es } from "date-fns/locale";
 import { authFetch, getUser } from "@/lib/auth";
 
-
 const API =
   (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api/v1";
-const HOTEL_ID = (typeof window !== "undefined" ? getUser()?.hotel_id : null) ?? 1;
+const HOTEL_ID =
+  (typeof window !== "undefined" ? getUser()?.hotel_id : null) ?? 1;
 
 const MESES = [
   "Enero",
@@ -227,18 +227,22 @@ export default function EmpleadosPage() {
       let totalMinsTrabajados = 0;
       let totalMinsExtra = 0;
 
+      // Agrupar turnos por día
+      const minsPorDia: Record<string, number> = {};
       fichajes.forEach((f: any) => {
         if (!f.hora_entrada || !f.hora_salida) return;
         const [hE, mE] = f.hora_entrada.split(":").map(Number);
         const [hS, mS] = f.hora_salida.split(":").map(Number);
         const mins = (hS * 60 + mS - (hE * 60 + mE) + 24 * 60) % (24 * 60);
         if (mins <= 0) return;
+        minsPorDia[f.fecha] = (minsPorDia[f.fecha] || 0) + mins;
+      });
 
-        totalMinsTrabajados += mins;
-
+      Object.values(minsPorDia).forEach((minsDia) => {
+        totalMinsTrabajados += minsDia;
         if (sueldo.tipo_empleado === "fijo" && sueldo.horas_diarias) {
           const minutosEsperados = sueldo.horas_diarias * 60;
-          const extra = mins - minutosEsperados;
+          const extra = minsDia - minutosEsperados;
           if (extra > 0) totalMinsExtra += extra;
         }
       });

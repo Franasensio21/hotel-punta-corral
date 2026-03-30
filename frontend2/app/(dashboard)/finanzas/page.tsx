@@ -43,7 +43,8 @@ import { authFetch, getUser } from "@/lib/auth";
 
 const API =
   (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api/v1";
-const HOTEL_ID = (typeof window !== "undefined" ? getUser()?.hotel_id : null) ?? 1;
+const HOTEL_ID =
+  (typeof window !== "undefined" ? getUser()?.hotel_id : null) ?? 1;
 
 const MESES = [
   "Enero",
@@ -134,7 +135,9 @@ export default function FinanzasPage() {
       // Mes anterior para calcular horas (las horas de febrero se pagan en marzo)
       const mesAnterior = mes === 0 ? 11 : mes - 1;
       const anioAnterior = mes === 0 ? anio - 1 : anio;
-      const diasMesAnterior = getDaysInMonth(new Date(anioAnterior, mesAnterior));
+      const diasMesAnterior = getDaysInMonth(
+        new Date(anioAnterior, mesAnterior),
+      );
 
       const [gastosRaw, sueldosData, reservasRaw] = await Promise.all([
         authFetch(
@@ -267,7 +270,10 @@ export default function FinanzasPage() {
       // Traer fichajes del mes anterior
       const fichajesMesAnteriorData = await Promise.all(
         Array.from({ length: diasMesAnterior }, (_, i) => {
-          const d = format(new Date(anioAnterior, mesAnterior, i + 1), "yyyy-MM-dd");
+          const d = format(
+            new Date(anioAnterior, mesAnterior, i + 1),
+            "yyyy-MM-dd",
+          );
           return authFetch(
             `${API}/fichajes?fecha=${d}&hotel_id=${HOTEL_ID}`,
           ).then((r) => r.json());
@@ -280,33 +286,44 @@ export default function FinanzasPage() {
       const minsTrabajadosPorEmpleado: Record<number, number> = {};
       const minsExtraPorEmpleado: Record<number, number> = {};
 
+      // Agrupar fichajes por empleado y día
+      const fichajesPorDia: Record<string, number> = {};
       fichajesFlat.forEach((f: any) => {
         if (!f.hora_entrada || !f.hora_salida) return;
         const [hE, mE] = f.hora_entrada.split(":").map(Number);
         const [hS, mS] = f.hora_salida.split(":").map(Number);
-        const mins = ((hS * 60 + mS) - (hE * 60 + mE) + 24 * 60) % (24 * 60)
+        const mins = (hS * 60 + mS - (hE * 60 + mE) + 24 * 60) % (24 * 60);
         if (mins <= 0) return;
+        const key = `${f.user_id}_${f.fecha}`;
+        fichajesPorDia[key] = (fichajesPorDia[key] || 0) + mins;
+      });
 
-        minsTrabajadosPorEmpleado[f.user_id] =
-          (minsTrabajadosPorEmpleado[f.user_id] || 0) + mins;
+      // Calcular extras agrupando por día
+      Object.entries(fichajesPorDia).forEach(([key, minsTotalesDia]) => {
+        const userId = parseInt(key.split("_")[0]);
+        minsTrabajadosPorEmpleado[userId] =
+          (minsTrabajadosPorEmpleado[userId] || 0) + minsTotalesDia;
 
-        // Para empleados fijos: calcular solo los minutos que superan la carga horaria
-        const sueldo = sueldosArray.find((s: any) => s.user_id === f.user_id);
+        const sueldo = sueldosArray.find((s: any) => s.user_id === userId);
         if (sueldo?.tipo_empleado === "fijo" && sueldo?.horas_diarias) {
           const minutosEsperados = sueldo.horas_diarias * 60;
-          const extra = mins - minutosEsperados;
+          const extra = minsTotalesDia - minutosEsperados;
           if (extra > 0) {
-            minsExtraPorEmpleado[f.user_id] =
-              (minsExtraPorEmpleado[f.user_id] || 0) + extra;
+            minsExtraPorEmpleado[userId] =
+              (minsExtraPorEmpleado[userId] || 0) + extra;
           }
         }
       });
 
       // Buscar sueldo del mes actual para cada empleado
       const getSueldoDelMes = (userId: number) => {
-        const sueldosEmpleado = sueldosArray.filter((s: any) => s.user_id === userId);
+        const sueldosEmpleado = sueldosArray.filter(
+          (s: any) => s.user_id === userId,
+        );
         return (
-          sueldosEmpleado.find((s: any) => s.mes === mes + 1 && s.anio === anio) ||
+          sueldosEmpleado.find(
+            (s: any) => s.mes === mes + 1 && s.anio === anio,
+          ) ||
           sueldosEmpleado
             .filter((s: any) => s.anio !== null)
             .sort(
@@ -318,38 +335,45 @@ export default function FinanzasPage() {
       };
 
       // Obtener usuarios únicos con sueldo activo
-      const userIds = [...new Set(sueldosArray.filter((s: any) => s.activo).map((s: any) => s.user_id))];
+      const userIds = [
+        ...new Set(
+          sueldosArray.filter((s: any) => s.activo).map((s: any) => s.user_id),
+        ),
+      ];
 
-      const calcSueldos: SueldoCalc[] = userIds.map((userId: any) => {
-        const sueldo = getSueldoDelMes(userId);
-        if (!sueldo) return null;
+      const calcSueldos: SueldoCalc[] = userIds
+        .map((userId: any) => {
+          const sueldo = getSueldoDelMes(userId);
+          if (!sueldo) return null;
 
-        let total = 0;
-        let horasMostrar = 0;
+          let total = 0;
+          let horasMostrar = 0;
 
-        if (sueldo.tipo_empleado === "fijo") {
-          // Fijo: sueldo fijo + horas extra del mes anterior
-          const minsExtra = minsExtraPorEmpleado[userId] || 0;
-          horasMostrar = Math.round((minsExtra / 60) * 10) / 10;
-          total = sueldo.sueldo_fijo + minsExtra * (sueldo.sueldo_por_hora / 60);
-        } else {
-          // Temporal: todas las horas trabajadas del mes anterior
-          const minsTrabajados = minsTrabajadosPorEmpleado[userId] || 0;
-          horasMostrar = Math.round((minsTrabajados / 60) * 10) / 10;
-          total = minsTrabajados * (sueldo.sueldo_por_hora / 60);
-        }
+          if (sueldo.tipo_empleado === "fijo") {
+            // Fijo: sueldo fijo + horas extra del mes anterior
+            const minsExtra = minsExtraPorEmpleado[userId] || 0;
+            horasMostrar = Math.round((minsExtra / 60) * 10) / 10;
+            total =
+              sueldo.sueldo_fijo + minsExtra * (sueldo.sueldo_por_hora / 60);
+          } else {
+            // Temporal: todas las horas trabajadas del mes anterior
+            const minsTrabajados = minsTrabajadosPorEmpleado[userId] || 0;
+            horasMostrar = Math.round((minsTrabajados / 60) * 10) / 10;
+            total = minsTrabajados * (sueldo.sueldo_por_hora / 60);
+          }
 
-        return {
-          user_id: userId,
-          name: sueldo.name,
-          categoria: sueldo.categoria,
-          sueldo_fijo: sueldo.sueldo_fijo || 0,
-          sueldo_por_hora: sueldo.sueldo_por_hora || 0,
-          horas_trabajadas: horasMostrar,
-          total: Math.round(total),
-          tipo_empleado: sueldo.tipo_empleado,
-        };
-      }).filter(Boolean) as SueldoCalc[];
+          return {
+            user_id: userId,
+            name: sueldo.name,
+            categoria: sueldo.categoria,
+            sueldo_fijo: sueldo.sueldo_fijo || 0,
+            sueldo_por_hora: sueldo.sueldo_por_hora || 0,
+            horas_trabajadas: horasMostrar,
+            total: Math.round(total),
+            tipo_empleado: sueldo.tipo_empleado,
+          };
+        })
+        .filter(Boolean) as SueldoCalc[];
 
       setSueldos(calcSueldos);
     } catch (e) {
