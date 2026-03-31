@@ -238,11 +238,11 @@ export function ReservationTable({
                       <DropdownMenuItem onClick={() => abrirEditar(r)}>
                         <Pencil className="mr-2 size-4" />
                         Editar precio / seña
-                      <DropdownMenuItem onClick={() => verHistorial(r)}>
+                      </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => verHistorial(r)}>
                             <Clock className="mr-2 size-4" />
                             Ver historial
-                      </DropdownMenuItem>
-                      </DropdownMenuItem>
+                          </DropdownMenuItem>
                       {esActiva && (
                         <DropdownMenuItem
                           onClick={() => onCancel(r)}
