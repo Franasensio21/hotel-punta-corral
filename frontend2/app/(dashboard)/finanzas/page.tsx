@@ -713,7 +713,7 @@ export default function FinanzasPage() {
                         : "—"}
                     </TableCell>
                     <TableCell>
-                      {s.horas_trabajadas > 0 ? `${s.horas_trabajadas}h` : "—"}
+                      {s.horas_trabajadas > 0 ? `${Math.floor(s.horas_trabajadas)}h ${Math.round((s.horas_trabajadas % 1) * 60)}m` : "—"}
                     </TableCell>
                     <TableCell>
                       {s.sueldo_por_hora > 0
