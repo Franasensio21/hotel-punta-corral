@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { format } from "date-fns";
+import { format, getDaysInMonth } from "date-fns";
 import { es } from "date-fns/locale";
-import { CalendarIcon, Clock, Plus, Pencil, Trash2 } from "lucide-react";
+import { CalendarIcon, Clock, Plus, Pencil, Trash2, User } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,8 @@ import { authFetch, getUser } from "@/lib/auth";
 
 const API = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api/v1";
 const HOTEL_ID = (typeof window !== "undefined" ? getUser()?.hotel_id : null) ?? 1;
+
+const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
 interface Fichaje {
   id: number;
@@ -46,18 +48,27 @@ interface Turno {
   notas: string;
 }
 
-function calcHoras(entrada: string | null, salida: string | null): string {
-  if (!entrada || !salida) return "—";
+function calcMins(entrada: string | null, salida: string | null): number {
+  if (!entrada || !salida) return 0;
   const [hE, mE] = entrada.split(":").map(Number);
   const [hS, mS] = salida.split(":").map(Number);
-  const minutos = (hS * 60 + mS - (hE * 60 + mE) + 24 * 60) % (24 * 60);
-  if (minutos <= 0) return "—";
-  const h = Math.floor(minutos / 60);
-  const m = minutos % 60;
+  return (hS * 60 + mS - (hE * 60 + mE) + 24 * 60) % (24 * 60);
+}
+
+function formatMins(mins: number): string {
+  if (mins <= 0) return "—";
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
+function calcHoras(entrada: string | null, salida: string | null): string {
+  return formatMins(calcMins(entrada, salida));
+}
+
 export default function FichajesPage() {
+  const hoy = new Date();
+
   const [fichajes, setFichajes] = useState<Fichaje[]>([]);
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
   const [fecha, setFecha] = useState<Date>(new Date());
@@ -65,15 +76,25 @@ export default function FichajesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editando, setEditando] = useState<Fichaje | null>(null);
   const [guardando, setGuardando] = useState(false);
-
-  // Para crear: selección de empleado + múltiples turnos
   const [selectedUserId, setSelectedUserId] = useState("");
   const [turnos, setTurnos] = useState<Turno[]>([{ hora_entrada: "", hora_salida: "", notas: "" }]);
-
-  // Para editar: un solo turno
   const [formEditar, setFormEditar] = useState({ hora_entrada: "", hora_salida: "", notas: "" });
 
+  const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState<string>("");
+  const [mesSel, setMesSel] = useState(hoy.getMonth());
+  const [anioSel, setAnioSel] = useState(hoy.getFullYear());
+  const [fichajesMes, setFichajesMes] = useState<Fichaje[]>([]);
+  const [loadingMes, setLoadingMes] = useState(false);
+  const [modalDia, setModalDia] = useState(false);
+  const [fichajesDia, setFichajesDia] = useState<Fichaje[]>([]);
+  const [fechaDia, setFechaDia] = useState<string>("");
+  const [guardandoDia, setGuardandoDia] = useState(false);
+
   useEffect(() => { fetchData() }, [fecha]);
+
+  useEffect(() => {
+    if (empleadoSeleccionado) fetchFichajesMes();
+  }, [empleadoSeleccionado, mesSel, anioSel]);
 
   async function fetchData() {
     setLoading(true);
@@ -87,6 +108,24 @@ export default function FichajesPage() {
       setEmpleados(empData.filter((e: Empleado) => e.active));
     } catch (e) { console.error(e) }
     finally { setLoading(false) }
+  }
+
+  async function fetchFichajesMes() {
+    if (!empleadoSeleccionado) return;
+    setLoadingMes(true);
+    try {
+      const diasMes = getDaysInMonth(new Date(anioSel, mesSel));
+      const resultados = await Promise.all(
+        Array.from({ length: diasMes }, (_, i) => {
+          const d = format(new Date(anioSel, mesSel, i + 1), "yyyy-MM-dd");
+          return authFetch(`${API}/fichajes?fecha=${d}&hotel_id=${HOTEL_ID}`)
+            .then(r => r.json())
+            .then((data: Fichaje[]) => data.filter(f => f.user_id === parseInt(empleadoSeleccionado)));
+        })
+      );
+      setFichajesMes(resultados.flat());
+    } catch (e) { console.error(e) }
+    finally { setLoadingMes(false) }
   }
 
   function abrirNuevo(userId?: string) {
@@ -104,6 +143,12 @@ export default function FichajesPage() {
       notas: f.notas || "",
     });
     setModalOpen(true);
+  }
+
+  function abrirDia(fechaStr: string, fichajesDelDia: Fichaje[]) {
+    setFechaDia(fechaStr);
+    setFichajesDia(fichajesDelDia.map(f => ({ ...f })));
+    setModalDia(true);
   }
 
   function agregarTurno() {
@@ -134,6 +179,7 @@ export default function FichajesPage() {
         toast.success("Fichaje actualizado");
         setModalOpen(false);
         fetchData();
+        if (empleadoSeleccionado) fetchFichajesMes();
       } catch (e) {
         toast.error("Error al guardar");
       } finally {
@@ -142,16 +188,9 @@ export default function FichajesPage() {
       return;
     }
 
-    // Crear múltiples turnos
-    if (!selectedUserId) {
-      toast.error("Seleccioná un empleado");
-      return;
-    }
+    if (!selectedUserId) { toast.error("Seleccioná un empleado"); return; }
     const turnosValidos = turnos.filter(t => t.hora_entrada || t.hora_salida);
-    if (turnosValidos.length === 0) {
-      toast.error("Cargá al menos un turno");
-      return;
-    }
+    if (turnosValidos.length === 0) { toast.error("Cargá al menos un turno"); return; }
 
     setGuardando(true);
     try {
@@ -171,9 +210,10 @@ export default function FichajesPage() {
           })
         )
       );
-      toast.success(`${turnosValidos.length} turno${turnosValidos.length > 1 ? "s" : ""} cargado${turnosValidos.length > 1 ? "s" : ""}`)
+      toast.success(`${turnosValidos.length} turno${turnosValidos.length > 1 ? "s" : ""} cargado${turnosValidos.length > 1 ? "s" : ""}`);
       setModalOpen(false);
       fetchData();
+      if (empleadoSeleccionado) fetchFichajesMes();
     } catch (e) {
       toast.error("Error al guardar");
     } finally {
@@ -185,18 +225,62 @@ export default function FichajesPage() {
     await authFetch(`${API}/fichajes/${id}?hotel_id=${HOTEL_ID}`, { method: "DELETE" });
     toast.success("Fichaje eliminado");
     fetchData();
+    if (empleadoSeleccionado) fetchFichajesMes();
   }
+
+  async function handleGuardarDia() {
+    setGuardandoDia(true);
+    try {
+      await Promise.all(
+        fichajesDia.map(f =>
+          authFetch(`${API}/fichajes/${f.id}?hotel_id=${HOTEL_ID}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              hora_entrada: f.hora_entrada?.slice(0, 5) || null,
+              hora_salida: f.hora_salida?.slice(0, 5) || null,
+              notas: f.notas || null,
+            }),
+          })
+        )
+      );
+      toast.success("Turnos actualizados");
+      setModalDia(false);
+      fetchFichajesMes();
+    } catch (e) {
+      toast.error("Error al guardar");
+    } finally {
+      setGuardandoDia(false);
+    }
+  }
+
+  async function handleEliminarDelDia(id: number) {
+    await authFetch(`${API}/fichajes/${id}?hotel_id=${HOTEL_ID}`, { method: "DELETE" });
+    setFichajesDia(prev => prev.filter(f => f.id !== id));
+    toast.success("Fichaje eliminado");
+    fetchFichajesMes();
+  }
+
+  const fichajesPorFecha: Record<string, Fichaje[]> = {};
+  fichajesMes.forEach(f => {
+    if (!fichajesPorFecha[f.fecha]) fichajesPorFecha[f.fecha] = [];
+    fichajesPorFecha[f.fecha].push(f);
+  });
+
+  const diasTrabajados = Object.keys(fichajesPorFecha).sort();
+
+  const totalMinsMes = diasTrabajados.reduce((sum, fecha) => {
+    return sum + fichajesPorFecha[fecha].reduce((s, f) => s + calcMins(f.hora_entrada, f.hora_salida), 0);
+  }, 0);
 
   const idsConFichaje = new Set(fichajes.map(f => f.user_id));
   const sinFichaje = empleados.filter(e => !idsConFichaje.has(e.id));
 
   const totalHoras = fichajes.reduce((sum, f) => {
-    if (!f.hora_entrada || !f.hora_salida) return sum;
-    const [hE, mE] = f.hora_entrada.split(":").map(Number);
-    const [hS, mS] = f.hora_salida.split(":").map(Number);
-    const mins = (hS * 60 + mS - (hE * 60 + mE) + 24 * 60) % (24 * 60);
-    return sum + mins;
+    return sum + calcMins(f.hora_entrada, f.hora_salida);
   }, 0);
+
+  const anios = Array.from({ length: 3 }, (_, i) => hoy.getFullYear() - 1 + i);
 
   return (
     <div className="flex flex-col gap-6">
@@ -226,7 +310,6 @@ export default function FichajesPage() {
         </div>
       </div>
 
-      {/* Resumen */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm">Con fichaje</CardTitle></CardHeader>
@@ -246,7 +329,6 @@ export default function FichajesPage() {
         </Card>
       </div>
 
-      {/* Tabla fichajes */}
       <Card>
         <CardHeader><CardTitle className="text-base">Registro del día</CardTitle></CardHeader>
         <CardContent>
@@ -306,7 +388,6 @@ export default function FichajesPage() {
         </CardContent>
       </Card>
 
-      {/* Empleados sin fichaje */}
       {sinFichaje.length > 0 && (
         <Card style={{ borderColor: "#fecaca" }}>
           <CardHeader className="pb-3">
@@ -326,7 +407,107 @@ export default function FichajesPage() {
         </Card>
       )}
 
-      {/* Modal */}
+      {/* Historial mensual por empleado */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <User className="size-4" />
+            Historial mensual por empleado
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-4">
+            <div className="flex gap-2 flex-wrap">
+              <Select value={empleadoSeleccionado} onValueChange={setEmpleadoSeleccionado}>
+                <SelectTrigger className="w-[220px]">
+                  <SelectValue placeholder="Seleccioná un empleado..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {empleados.map(e => (
+                    <SelectItem key={e.id} value={e.id.toString()}>
+                      {e.name} {e.categoria && `(${e.categoria})`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={mesSel.toString()} onValueChange={v => setMesSel(parseInt(v))}>
+                <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {MESES.map((m, i) => <SelectItem key={i} value={i.toString()}>{m}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={anioSel.toString()} onValueChange={v => setAnioSel(parseInt(v))}>
+                <SelectTrigger className="w-[90px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {anios.map(a => <SelectItem key={a} value={a.toString()}>{a}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {!empleadoSeleccionado ? (
+              <p className="text-sm text-muted-foreground text-center py-6">Seleccioná un empleado para ver su historial</p>
+            ) : loadingMes ? (
+              <div className="flex flex-col gap-2">
+                {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+              </div>
+            ) : diasTrabajados.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">
+                No hay fichajes en {MESES[mesSel]} {anioSel}
+              </p>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    {diasTrabajados.length} días trabajados en {MESES[mesSel]}
+                  </p>
+                  <p className="text-sm font-semibold">Total: {formatMins(totalMinsMes)}</p>
+                </div>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Turnos</TableHead>
+                      <TableHead>Total horas</TableHead>
+                      <TableHead className="w-[50px]"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {diasTrabajados.map(fechaStr => {
+                      const turnosDia = fichajesPorFecha[fechaStr];
+                      const minsDia = turnosDia.reduce((s, f) => s + calcMins(f.hora_entrada, f.hora_salida), 0);
+                      return (
+                        <TableRow key={fechaStr}>
+                          <TableCell className="font-medium">
+                            {format(new Date(fechaStr + "T12:00:00"), "dd/MM/yyyy", { locale: es })}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col gap-1">
+                              {turnosDia.map(t => (
+                                <span key={t.id} className="text-xs text-muted-foreground">
+                                  {t.hora_entrada?.slice(0, 5) || "—"} → {t.hora_salida?.slice(0, 5) || "—"}
+                                  {t.notas && <span className="ml-1 italic">({t.notas})</span>}
+                                </span>
+                              ))}
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-semibold">{formatMins(minsDia)}</TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="sm" onClick={() => abrirDia(fechaStr, turnosDia)}>
+                              <Pencil className="size-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Modal cargar/editar fichaje */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -334,9 +515,7 @@ export default function FichajesPage() {
               {editando ? `Editar fichaje — ${editando.name}` : "Cargar fichaje"}
             </DialogTitle>
           </DialogHeader>
-
           {editando ? (
-            // Modo editar — un solo turno
             <div className="flex flex-col gap-4 py-2">
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
@@ -358,7 +537,6 @@ export default function FichajesPage() {
               </div>
             </div>
           ) : (
-            // Modo crear — empleado + múltiples turnos
             <div className="flex flex-col gap-4 py-2">
               <div className="flex flex-col gap-2">
                 <Label>Empleado *</Label>
@@ -373,21 +551,18 @@ export default function FichajesPage() {
                   </SelectContent>
                 </Select>
               </div>
-
               <Separator />
-
               <div className="flex flex-col gap-3">
                 {turnos.map((turno, idx) => (
                   <div key={idx} className="flex flex-col gap-2">
-                    {idx > 0 && (
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs text-muted-foreground font-medium">Turno {idx + 1}</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-muted-foreground font-medium">Turno {idx + 1}</p>
+                      {idx > 0 && (
                         <Button variant="ghost" size="sm" onClick={() => eliminarTurno(idx)}>
                           <Trash2 className="size-3 text-destructive" />
                         </Button>
-                      </div>
-                    )}
-                    {idx === 0 && <p className="text-xs text-muted-foreground font-medium">Turno 1</p>}
+                      )}
+                    </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="flex flex-col gap-1">
                         <Label className="text-xs">Entrada</Label>
@@ -405,18 +580,72 @@ export default function FichajesPage() {
                   </div>
                 ))}
               </div>
-
               <Button variant="outline" size="sm" onClick={agregarTurno} className="gap-2 w-full">
                 <Plus className="size-3" />
                 Añadir turno
               </Button>
             </div>
           )}
-
           <DialogFooter>
             <Button variant="outline" onClick={() => setModalOpen(false)}>Cancelar</Button>
             <Button onClick={handleGuardar} disabled={guardando}>
               {guardando ? "Guardando..." : "Guardar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal editar turnos de un día del historial */}
+      <Dialog open={modalDia} onOpenChange={setModalDia}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Editar turnos — {fechaDia ? format(new Date(fechaDia + "T12:00:00"), "dd/MM/yyyy", { locale: es }) : ""}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 py-2 max-h-[400px] overflow-y-auto">
+            {fichajesDia.map((f, idx) => (
+              <div key={f.id} className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground font-medium">Turno {idx + 1}</p>
+                  <Button variant="ghost" size="sm" onClick={() => handleEliminarDelDia(f.id)}>
+                    <Trash2 className="size-3 text-destructive" />
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <Label className="text-xs">Entrada</Label>
+                    <Input type="time"
+                      value={f.hora_entrada?.slice(0, 5) || ""}
+                      onChange={e => setFichajesDia(prev => prev.map((fi, i) =>
+                        i === idx ? { ...fi, hora_entrada: e.target.value } : fi
+                      ))} />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <Label className="text-xs">Salida</Label>
+                    <Input type="time"
+                      value={f.hora_salida?.slice(0, 5) || ""}
+                      onChange={e => setFichajesDia(prev => prev.map((fi, i) =>
+                        i === idx ? { ...fi, hora_salida: e.target.value } : fi
+                      ))} />
+                  </div>
+                </div>
+                <Input
+                  value={f.notas || ""}
+                  onChange={e => setFichajesDia(prev => prev.map((fi, i) =>
+                    i === idx ? { ...fi, notas: e.target.value } : fi
+                  ))}
+                  placeholder="Notas del turno (opcional)"
+                  className="text-sm"
+                />
+                {idx < fichajesDia.length - 1 && <Separator />}
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setModalDia(false)}>Cancelar</Button>
+            <Button onClick={handleGuardarDia} disabled={guardandoDia}>
+              {guardandoDia ? "Guardando..." : "Guardar cambios"}
             </Button>
           </DialogFooter>
         </DialogContent>
