@@ -1042,12 +1042,11 @@ def update_grupo(grupo_id: int, data: dict, hotel_id: int = Depends(get_hotel_id
 @router.delete("/grupos/{grupo_id}", tags=["Grupos"])
 def delete_grupo(grupo_id: int, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
-    # Cancelar todas las reservas del grupo
+    # Borrar directamente las reservas del grupo sin pasar por el trigger
     db.execute(text("""
-        UPDATE reservations SET status = 'cancelled' 
+        DELETE FROM reservations 
         WHERE group_id = :grupo_id AND hotel_id = :hotel_id
     """), {"grupo_id": grupo_id, "hotel_id": hotel_id})
-    # Borrar el grupo
     db.execute(text("DELETE FROM groups WHERE id = :id AND hotel_id = :hotel_id"), 
                {"id": grupo_id, "hotel_id": hotel_id})
     db.commit()
