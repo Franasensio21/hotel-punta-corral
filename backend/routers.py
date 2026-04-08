@@ -1351,3 +1351,154 @@ def create_hotel(data: dict, db: Session = Depends(get_db)):
         db.rollback()
         print(f"ERROR CREATE HOTEL: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error al registrar: {str(e)}")
+    
+
+    # ══════════════════════════════════════════════════════════════
+# STOCK
+# ══════════════════════════════════════════════════════════════
+
+@router.get("/stock/productos", tags=["Stock"])
+def get_stock_productos(
+    hotel_id: int = Depends(get_hotel_id),
+    categoria: str = Query(None),
+    db: Session = Depends(get_db)
+):
+    from sqlalchemy import text
+    query = "SELECT * FROM stock_productos WHERE hotel_id = :hotel_id AND activo = true"
+    params = {"hotel_id": hotel_id}
+    if categoria:
+        query += " AND categoria = :categoria"
+        params["categoria"] = categoria
+    query += " ORDER BY categoria, nombre"
+    result = db.execute(text(query), params).fetchall()
+    return [dict(r._mapping) for r in result]
+
+
+@router.post("/stock/productos", status_code=201, tags=["Stock"])
+def create_stock_producto(data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    result = db.execute(text("""
+        INSERT INTO stock_productos (hotel_id, nombre, categoria, cantidad, unidad)
+        VALUES (:hotel_id, :nombre, :categoria, 0, :unidad)
+        RETURNING id
+    """), {
+        "hotel_id":  hotel_id,
+        "nombre":    data["nombre"],
+        "categoria": data["categoria"],
+        "unidad":    data.get("unidad", "unidad"),
+    })
+    db.commit()
+    return {"ok": True, "id": result.fetchone()[0]}
+
+
+@router.patch("/stock/productos/{producto_id}", tags=["Stock"])
+def update_stock_producto(producto_id: int, data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    campos = []
+    params = {"id": producto_id, "hotel_id": hotel_id}
+    for field in ["nombre", "categoria", "unidad", "activo"]:
+        if field in data:
+            campos.append(f"{field} = :{field}")
+            params[field] = data[field]
+    if not campos:
+        return {"ok": True}
+    db.execute(text(f"UPDATE stock_productos SET {', '.join(campos)} WHERE id = :id AND hotel_id = :hotel_id"), params)
+    db.commit()
+    return {"ok": True}
+
+
+@router.get("/stock/movimientos", tags=["Stock"])
+def get_stock_movimientos(
+    hotel_id: int = Depends(get_hotel_id),
+    producto_id: int = Query(None),
+    mes: int = Query(None),
+    anio: int = Query(None),
+    db: Session = Depends(get_db)
+):
+    from sqlalchemy import text
+    import datetime
+    hoy = datetime.date.today()
+    mes  = mes  or hoy.month
+    anio = anio or hoy.year
+    query = """
+        SELECT m.*, p.nombre, p.categoria, p.unidad
+        FROM stock_movimientos m
+        JOIN stock_productos p ON p.id = m.producto_id
+        WHERE m.hotel_id = :hotel_id
+          AND EXTRACT(MONTH FROM m.fecha) = :mes
+          AND EXTRACT(YEAR FROM m.fecha) = :anio
+    """
+    params = {"hotel_id": hotel_id, "mes": mes, "anio": anio}
+    if producto_id:
+        query += " AND m.producto_id = :producto_id"
+        params["producto_id"] = producto_id
+    query += " ORDER BY m.fecha DESC, m.created_at DESC"
+    result = db.execute(text(query), params).fetchall()
+    return [dict(r._mapping) for r in result]
+
+
+@router.post("/stock/movimientos", status_code=201, tags=["Stock"])
+def create_stock_movimiento(data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    import datetime
+    cantidad       = float(data["cantidad"])
+    precio_unitario = float(data.get("precio_unitario", 0))
+    precio_total   = cantidad * precio_unitario
+    fecha          = data.get("fecha", datetime.date.today().isoformat())
+
+    # Registrar movimiento
+    db.execute(text("""
+        INSERT INTO stock_movimientos (hotel_id, producto_id, tipo, cantidad, precio_unitario, precio_total, fecha, notas)
+        VALUES (:hotel_id, :producto_id, :tipo, :cantidad, :precio_unitario, :precio_total, :fecha, :notas)
+    """), {
+        "hotel_id":       hotel_id,
+        "producto_id":    data["producto_id"],
+        "tipo":           data.get("tipo", "compra"),
+        "cantidad":       cantidad,
+        "precio_unitario": precio_unitario,
+        "precio_total":   precio_total,
+        "fecha":          fecha,
+        "notas":          data.get("notas"),
+    })
+
+    # Actualizar stock del producto
+    db.execute(text("""
+        UPDATE stock_productos 
+        SET cantidad = cantidad + :cantidad
+        WHERE id = :producto_id AND hotel_id = :hotel_id
+    """), {"cantidad": cantidad, "producto_id": data["producto_id"], "hotel_id": hotel_id})
+
+    # Registrar como gasto automáticamente
+    producto = db.execute(text("SELECT categoria FROM stock_productos WHERE id = :id"), {"id": data["producto_id"]}).fetchone()
+    if producto and precio_total > 0:
+        db.execute(text("""
+            INSERT INTO gastos (hotel_id, fecha, descripcion, monto, categoria, notas)
+            VALUES (:hotel_id, :fecha, :descripcion, :monto, :categoria, :notas)
+        """), {
+            "hotel_id":    hotel_id,
+            "fecha":       fecha,
+            "descripcion": f"Stock: {data.get('nombre_producto', 'Compra')}",
+            "monto":       precio_total,
+            "categoria":   producto[0],
+            "notas":       f"Cantidad: {cantidad} {data.get('unidad', 'unidades')}",
+        })
+
+    db.commit()
+    return {"ok": True}
+
+
+@router.delete("/stock/movimientos/{movimiento_id}", tags=["Stock"])
+def delete_stock_movimiento(movimiento_id: int, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    mov = db.execute(text("SELECT * FROM stock_movimientos WHERE id = :id AND hotel_id = :hotel_id"),
+                     {"id": movimiento_id, "hotel_id": hotel_id}).fetchone()
+    if not mov:
+        raise HTTPException(status_code=404, detail="Movimiento no encontrado")
+    # Revertir stock
+    db.execute(text("""
+        UPDATE stock_productos SET cantidad = cantidad - :cantidad
+        WHERE id = :producto_id AND hotel_id = :hotel_id
+    """), {"cantidad": mov.cantidad, "producto_id": mov.producto_id, "hotel_id": hotel_id})
+    db.execute(text("DELETE FROM stock_movimientos WHERE id = :id"), {"id": movimiento_id})
+    db.commit()
+    return {"ok": True}
