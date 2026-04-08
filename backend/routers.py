@@ -540,6 +540,92 @@ def get_grupos(
         .order_by(models.Group.arrival_date)
         .all()
     )
+
+# ══════════════════════════════════════════════════════════════
+# CENAS DE GRUPOS
+# ══════════════════════════════════════════════════════════════
+
+@router.get("/grupos/{grupo_id}/cenas", tags=["Grupos"])
+def get_cenas_grupo(grupo_id: int, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    result = db.execute(text("""
+        SELECT * FROM cenas_grupo
+        WHERE group_id = :grupo_id AND hotel_id = :hotel_id
+        ORDER BY fecha
+    """), {"grupo_id": grupo_id, "hotel_id": hotel_id}).fetchall()
+    return [dict(r._mapping) for r in result]
+
+
+@router.post("/grupos/{grupo_id}/cenas", status_code=201, tags=["Grupos"])
+def create_cena_grupo(grupo_id: int, data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    pasajeros        = int(data["pasajeros"])
+    precio_persona   = float(data["precio_por_persona"])
+    total            = pasajeros * precio_persona
+    db.execute(text("""
+        INSERT INTO cenas_grupo (hotel_id, group_id, fecha, pasajeros, precio_por_persona, total)
+        VALUES (:hotel_id, :group_id, :fecha, :pasajeros, :precio_por_persona, :total)
+    """), {
+        "hotel_id":          hotel_id,
+        "group_id":          grupo_id,
+        "fecha":             data["fecha"],
+        "pasajeros":         pasajeros,
+        "precio_por_persona": precio_persona,
+        "total":             total,
+    })
+    db.commit()
+    return {"ok": True}
+
+
+@router.patch("/grupos/{grupo_id}/cenas/{cena_id}", tags=["Grupos"])
+def update_cena_grupo(grupo_id: int, cena_id: int, data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    pasajeros      = int(data.get("pasajeros", 0))
+    precio_persona = float(data.get("precio_por_persona", 0))
+    total          = pasajeros * precio_persona
+    db.execute(text("""
+        UPDATE cenas_grupo SET pasajeros = :pasajeros, precio_por_persona = :precio_por_persona, total = :total
+        WHERE id = :id AND group_id = :group_id AND hotel_id = :hotel_id
+    """), {
+        "pasajeros": pasajeros, "precio_por_persona": precio_persona,
+        "total": total, "id": cena_id, "group_id": grupo_id, "hotel_id": hotel_id
+    })
+    db.commit()
+    return {"ok": True}
+
+
+@router.delete("/grupos/{grupo_id}/cenas/{cena_id}", tags=["Grupos"])
+def delete_cena_grupo(grupo_id: int, cena_id: int, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    db.execute(text("DELETE FROM cenas_grupo WHERE id = :id AND group_id = :group_id AND hotel_id = :hotel_id"),
+               {"id": cena_id, "group_id": grupo_id, "hotel_id": hotel_id})
+    db.commit()
+    return {"ok": True}
+
+
+@router.get("/cenas", tags=["Grupos"])
+def get_cenas_mes(
+    hotel_id: int = Depends(get_hotel_id),
+    mes: int = Query(None),
+    anio: int = Query(None),
+    db: Session = Depends(get_db)
+):
+    from sqlalchemy import text
+    import datetime
+    hoy  = datetime.date.today()
+    mes  = mes  or hoy.month
+    anio = anio or hoy.year
+    result = db.execute(text("""
+        SELECT c.*, g.name as grupo_nombre
+        FROM cenas_grupo c
+        JOIN groups g ON g.id = c.group_id
+        WHERE c.hotel_id = :hotel_id
+          AND EXTRACT(MONTH FROM c.fecha) = :mes
+          AND EXTRACT(YEAR  FROM c.fecha) = :anio
+        ORDER BY c.fecha
+    """), {"hotel_id": hotel_id, "mes": mes, "anio": anio}).fetchall()
+    return [dict(r._mapping) for r in result]
+
 # ══════════════════════════════════════════════════════════════
 # PRECIOS
 # ══════════════════════════════════════════════════════════════
@@ -985,9 +1071,9 @@ def create_grupo(data: dict, hotel_id: int = Depends(get_hotel_id), db: Session 
     from sqlalchemy import text
     result = db.execute(text("""
         INSERT INTO groups (hotel_id, name, contact_name, contact_email, contact_phone, 
-                           arrival_date, departure_date, personas, notes, status)
+                           arrival_date, departure_date, personas, notes, status, incluye_cena, precio_cena_por_persona)
         VALUES (:hotel_id, :name, :contact_name, :contact_email, :contact_phone,
-                :arrival_date, :departure_date, :personas, :notes, :status)
+                :arrival_date, :departure_date, :personas, :notes, :status, :incluye_cena, :precio_cena_por_persona)
         RETURNING id
     """), {
         "hotel_id":      hotel_id,
@@ -1000,6 +1086,8 @@ def create_grupo(data: dict, hotel_id: int = Depends(get_hotel_id), db: Session 
         "personas":      data.get("personas"),
         "notes":         data.get("notes"),
         "status":        data.get("status", "confirmado"),
+        "incluye_cena": data.get("incluye_cena", False),
+        "precio_cena_por_persona": data.get("precio_cena_por_persona"),
     })
     db.commit()
     return {"id": result.fetchone()[0], "ok": True}
@@ -1011,7 +1099,7 @@ def update_grupo(grupo_id: int, data: dict, hotel_id: int = Depends(get_hotel_id
     campos = []
     params = {"id": grupo_id, "hotel_id": hotel_id}
     for field in ["name", "contact_name", "contact_email", "contact_phone",
-                  "arrival_date", "departure_date", "personas", "notes", "status"]:
+                  "arrival_date", "departure_date", "personas", "notes", "status", "incluye_cena", "precio_cena_por_persona"]:
         if field in data:
             campos.append(f"{field} = :{field}")
             params[field] = data[field]
