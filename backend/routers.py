@@ -898,6 +898,20 @@ def create_gasto(data: dict, hotel_id: int = Depends(get_hotel_id), db: Session 
     db.commit()
     return {"ok": True}
 
+@router.patch("/gastos/{gasto_id}", tags=["Gastos"])
+def update_gasto(gasto_id: int, data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    campos = []
+    params = {"id": gasto_id, "hotel_id": hotel_id}
+    for field in ["fecha", "descripcion", "monto", "categoria", "notas"]:
+        if field in data:
+            campos.append(f"{field} = :{field}")
+            params[field] = data[field]
+    if not campos:
+        return {"ok": True}
+    db.execute(text(f"UPDATE gastos SET {', '.join(campos)} WHERE id = :id AND hotel_id = :hotel_id"), params)
+    db.commit()
+    return {"ok": True}
 
 @router.delete("/gastos/{gasto_id}", tags=["Gastos"])
 def delete_gasto(gasto_id: int, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
