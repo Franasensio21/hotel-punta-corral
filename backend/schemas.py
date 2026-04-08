@@ -50,13 +50,17 @@ class ChannelOut(BaseModel):
 # ── Groups ─────────────────────────────────────────────────────────────────
 
 class GroupCreate(BaseModel):
-    name:           str
-    contact_name:   Optional[str] = None
-    contact_email:  Optional[str] = None
-    contact_phone:  Optional[str] = None
-    arrival_date:   date
-    departure_date: date
-    notes:          Optional[str] = None
+    name:                    str
+    contact_name:            Optional[str] = None
+    contact_email:           Optional[str] = None
+    contact_phone:           Optional[str] = None
+    arrival_date:            date
+    departure_date:          date
+    notes:                   Optional[str] = None
+    personas:                Optional[int] = None
+    status:                  Optional[str] = "confirmado"
+    incluye_cena:            Optional[bool] = False
+    precio_cena_por_persona: Optional[float] = None
 
     @field_validator("departure_date")
     @classmethod
@@ -67,12 +71,12 @@ class GroupCreate(BaseModel):
 
 
 class GroupOut(GroupCreate):
-    id:         int
-    hotel_id:   int
-    created_at: datetime
+    id:                      int
+    hotel_id:                int
+    habitaciones_asignadas:  Optional[int] = 0
+    created_at:              datetime
 
     model_config = {"from_attributes": True}
-
 
 # ── Reservations ───────────────────────────────────────────────────────────
 

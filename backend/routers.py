@@ -501,45 +501,7 @@ def get_canales(db: Session = Depends(get_db)):
     return db.query(models.Channel).order_by(models.Channel.id).all()
 
 
-# ══════════════════════════════════════════════════════════════
-# GRUPOS
-# ══════════════════════════════════════════════════════════════
 
-@router.post(
-    "/grupos",
-    response_model=schemas.GroupOut,
-    status_code=201,
-    summary="Crear grupo",
-    tags=["Grupos"],
-)
-def crear_grupo(
-    data:     schemas.GroupCreate,
-    hotel_id: int     = Depends(get_hotel_id),
-    db:       Session = Depends(get_db),
-):
-    group = models.Group(hotel_id=hotel_id, **data.model_dump())
-    db.add(group)
-    db.commit()
-    db.refresh(group)
-    return group
-
-
-@router.get(
-    "/grupos",
-    response_model=list[schemas.GroupOut],
-    summary="Listar grupos",
-    tags=["Grupos"],
-)
-def get_grupos(
-    hotel_id: int = Depends(get_hotel_id),
-    db: Session   = Depends(get_db),
-):
-    return (
-        db.query(models.Group)
-        .filter(models.Group.hotel_id == hotel_id)
-        .order_by(models.Group.arrival_date)
-        .all()
-    )
 
 # ══════════════════════════════════════════════════════════════
 # CENAS DE GRUPOS
@@ -850,7 +812,7 @@ def get_fichajes(
     return [dict(r._mapping) for r in result]
 
 
-@router.post("/fichajes", status_code=201, tags=["Fichajes"])
+
 @router.post("/fichajes", status_code=201, tags=["Fichajes"])
 def create_fichaje(data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
     from sqlalchemy import text
