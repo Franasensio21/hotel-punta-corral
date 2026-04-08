@@ -25,21 +25,13 @@ const HOTEL_ID = (typeof window !== "undefined" ? getUser()?.hotel_id : null) ??
 const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
 const TODAS_CATEGORIAS_GASTO = [
-  "mantenimiento","limpieza","servicios","suministros","personal","otro",
-  "desayuno","cena","obra",
+  "mantenimiento","limpieza","servicios","suministros","personal","otro","desayuno","cena","obra",
 ];
 
 const CATEGORIA_COLORES: Record<string, string> = {
-  mantenimiento: "#3b82f6",
-  limpieza:      "#22c55e",
-  servicios:     "#06b6d4",
-  suministros:   "#8b5cf6",
-  personal:      "#f59e0b",
-  otro:          "#6b7280",
-  desayuno:      "#fb923c",
-  cena:          "#a855f7",
-  obra:          "#ef4444",
-  sueldos:       "#f97316",
+  mantenimiento: "#3b82f6", limpieza: "#22c55e", servicios: "#06b6d4",
+  suministros: "#8b5cf6", personal: "#f59e0b", otro: "#6b7280",
+  desayuno: "#fb923c", cena: "#a855f7", obra: "#ef4444", sueldos: "#f97316",
 };
 
 interface Gasto {
@@ -53,23 +45,20 @@ interface SueldoCalc {
   total: number; tipo_empleado?: string; horas_extra_modalidad?: string;
 }
 
-// ── Gráfico torta simple (SVG) ────────────────────────────────────────────
 function GraficoTorta({ datos, titulo }: { datos: { label: string; valor: number; color: string }[]; titulo: string }) {
   const total = datos.reduce((s, d) => s + d.valor, 0);
   if (total === 0) return (
     <div className="flex flex-col items-center justify-center h-48 text-muted-foreground text-sm">Sin datos</div>
   );
-
   let acumulado = 0;
   const segmentos = datos.filter(d => d.valor > 0).map(d => {
     const inicio = acumulado;
     acumulado += d.valor / total;
     return { ...d, inicio, fin: acumulado };
   });
-
   function segmentoPath(inicio: number, fin: number, r = 80, cx = 100, cy = 100) {
     const startAngle = inicio * 2 * Math.PI - Math.PI / 2;
-    const endAngle   = fin   * 2 * Math.PI - Math.PI / 2;
+    const endAngle = fin * 2 * Math.PI - Math.PI / 2;
     const x1 = cx + r * Math.cos(startAngle);
     const y1 = cy + r * Math.sin(startAngle);
     const x2 = cx + r * Math.cos(endAngle);
@@ -77,7 +66,6 @@ function GraficoTorta({ datos, titulo }: { datos: { label: string; valor: number
     const largeArc = fin - inicio > 0.5 ? 1 : 0;
     return `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
   }
-
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm font-semibold text-center">{titulo}</p>
@@ -105,72 +93,78 @@ function GraficoTorta({ datos, titulo }: { datos: { label: string; valor: number
 
 export default function FinanzasPage() {
   const hoy = new Date();
-  const [mes, setMes]   = useState(hoy.getMonth());
+  const [mes, setMes] = useState(hoy.getMonth());
   const [anio, setAnio] = useState(hoy.getFullYear());
-
-  const [gastos, setGastos]         = useState<Gasto[]>([]);
-  const [sueldos, setSueldos]       = useState<SueldoCalc[]>([]);
-  const [loading, setLoading]       = useState(true);
-  const [modalOpen, setModalOpen]   = useState(false);
-  const [guardando, setGuardando]   = useState(false);
-  const [ingresosMes, setIngresosMes]     = useState(0);
+  const [gastos, setGastos] = useState<Gasto[]>([]);
+  const [sueldos, setSueldos] = useState<SueldoCalc[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const [ingresosMes, setIngresosMes] = useState(0);
   const [ingresosCenas, setIngresosCenas] = useState(0);
   const [detalleIngresos, setDetalleIngresos] = useState<any[]>([]);
-  const [detalleOpen, setDetalleOpen]         = useState(false);
+  const [detalleOpen, setDetalleOpen] = useState(false);
 
-  // Editar gasto
   const [gastoEditando, setGastoEditando] = useState<Gasto | null>(null);
   const [modalEditarGasto, setModalEditarGasto] = useState(false);
   const [formEditar, setFormEditar] = useState({ fecha: "", descripcion: "", monto: "", categoria: "otro", notas: "" });
 
-  // Configuración secciones
-  const [modalConfig, setModalConfig]             = useState(false);
+  const [modalConfig, setModalConfig] = useState(false);
   const [categoriasReservas, setCategoriasReservas] = useState<string[]>([]);
-  const [categoriasCenas, setCategoriasCenas]       = useState<string[]>([]);
-  const [empleadosReservas, setEmpleadosReservas]   = useState<number[]>([]);
-  const [empleadosCenas, setEmpleadosCenas]         = useState<number[]>([]);
-  const [todosEmpleados, setTodosEmpleados]         = useState<any[]>([]);
+  const [categoriasCenas, setCategoriasCenas] = useState<string[]>([]);
+  const [empleadosReservas, setEmpleadosReservas] = useState<number[]>([]);
+  const [empleadosCenas, setEmpleadosCenas] = useState<number[]>([]);
 
-  // Expandir secciones
-  const [expandGastos, setExpandGastos]           = useState(true);
-  const [expandSueldos, setExpandSueldos]         = useState(true);
+  const [expandGastos, setExpandGastos] = useState(true);
+  const [expandSueldos, setExpandSueldos] = useState(true);
   const [expandDetalleReservas, setExpandDetalleReservas] = useState(false);
-  const [expandDetalleCenas, setExpandDetalleCenas]       = useState(false);
+  const [expandDetalleCenas, setExpandDetalleCenas] = useState(false);
 
   const [form, setForm] = useState({
-    fecha: format(new Date(), "yyyy-MM-dd"), descripcion: "",
-    monto: "", categoria: "otro", notas: "",
+    fecha: format(new Date(), "yyyy-MM-dd"), descripcion: "", monto: "", categoria: "otro", notas: "",
   });
 
   useEffect(() => { fetchData() }, [mes, anio]);
 
+  // Cargar config guardada al montar
+  useEffect(() => {
+    async function loadConfig() {
+      try {
+        const config = await authFetch(`${API}/finanzas/config?hotel_id=${HOTEL_ID}`).then(r => r.json());
+        if (config) {
+          setCategoriasReservas(config.categorias_reservas || []);
+          setCategoriasCenas(config.categorias_cenas || []);
+          setEmpleadosReservas(config.empleados_reservas || []);
+          setEmpleadosCenas(config.empleados_cenas || []);
+        }
+      } catch (e) { console.error(e) }
+    }
+    loadConfig();
+  }, []);
+
   async function fetchData() {
     setLoading(true);
     try {
-      const diasMes         = getDaysInMonth(new Date(anio, mes));
-      const fechaDesde      = format(new Date(anio, mes, 1), "yyyy-MM-dd");
-      const fechaHasta      = format(new Date(anio, mes, diasMes), "yyyy-MM-dd");
-      const mesAnterior     = mes === 0 ? 11 : mes - 1;
-      const anioAnterior    = mes === 0 ? anio - 1 : anio;
+      const diasMes = getDaysInMonth(new Date(anio, mes));
+      const fechaDesde = format(new Date(anio, mes, 1), "yyyy-MM-dd");
+      const fechaHasta = format(new Date(anio, mes, diasMes), "yyyy-MM-dd");
+      const mesAnterior = mes === 0 ? 11 : mes - 1;
+      const anioAnterior = mes === 0 ? anio - 1 : anio;
       const diasMesAnterior = getDaysInMonth(new Date(anioAnterior, mesAnterior));
 
-      const [gastosRaw, sueldosData, reservasRaw, cenasRaw, usuariosRaw] = await Promise.all([
+      const [gastosRaw, sueldosData, reservasRaw, cenasRaw] = await Promise.all([
         authFetch(`${API}/gastos?mes=${mes + 1}&anio=${anio}&hotel_id=${HOTEL_ID}`).then(r => r.json()),
         authFetch(`${API}/sueldos/historial?hotel_id=${HOTEL_ID}`).then(r => r.json()),
         authFetch(`${API}/reservas?hotel_id=${HOTEL_ID}&desde=${fechaDesde}&hasta=${fechaHasta}`).then(r => r.json()),
         authFetch(`${API}/cenas?hotel_id=${HOTEL_ID}&mes=${mes + 1}&anio=${anio}`).then(r => r.json()),
-        authFetch(`${API}/usuarios?hotel_id=${HOTEL_ID}`).then(r => r.json()),
       ]);
 
       const gastosData: Gasto[] = Array.isArray(gastosRaw) ? gastosRaw : (gastosRaw?.items ?? gastosRaw?.gastos ?? []);
       setGastos(gastosData);
-      setTodosEmpleados(Array.isArray(usuariosRaw) ? usuariosRaw : []);
 
-      // Ingresos cenas
       const cenasData = Array.isArray(cenasRaw) ? cenasRaw : [];
       setIngresosCenas(cenasData.reduce((sum: number, c: any) => sum + Number(c.total), 0));
 
-      // Ingresos reservas
       const reservas: any[] = Array.isArray(reservasRaw) ? reservasRaw : [];
       let totalIngresosMes = 0;
       const detalleTemp: Record<string, any> = {};
@@ -215,7 +209,7 @@ export default function FinanzasPage() {
                   numero: hab.numero, tipo: esSingle ? "single" : hab.tipo,
                   noches: 0, precios: [], precio, subtotal: 0,
                   es_grupo: esGrupo, es_single: esSingle, tiene_precio_total: false,
-                  canal: esGrupo ? "grupo" : "directo",
+                  canal: esGrupo ? "grupo" : hab.origen || "directo",
                 };
               }
               detalleTemp[key].noches += 1;
@@ -230,9 +224,7 @@ export default function FinanzasPage() {
       setDetalleIngresos(Object.values(detalleTemp).sort((a: any, b: any) => parseInt(a.numero) - parseInt(b.numero)));
       setIngresosMes(totalIngresosMes);
 
-      // Sueldos
       const sueldosArray: any[] = Array.isArray(sueldosData) ? sueldosData : (sueldosData?.items ?? sueldosData?.sueldos ?? []);
-
       const fichajesMesAnteriorData = await Promise.all(
         Array.from({ length: diasMesAnterior }, (_, i) => {
           const d = format(new Date(anioAnterior, mesAnterior, i + 1), "yyyy-MM-dd");
@@ -323,11 +315,7 @@ export default function FinanzasPage() {
     try {
       await authFetch(`${API}/gastos/${gastoEditando.id}?hotel_id=${HOTEL_ID}`, {
         method: "PATCH", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fecha: formEditar.fecha, descripcion: formEditar.descripcion,
-          monto: parseFloat(formEditar.monto), categoria: formEditar.categoria,
-          notas: formEditar.notas || null,
-        }),
+        body: JSON.stringify({ fecha: formEditar.fecha, descripcion: formEditar.descripcion, monto: parseFloat(formEditar.monto), categoria: formEditar.categoria, notas: formEditar.notas || null }),
       });
       toast.success("Gasto actualizado");
       setModalEditarGasto(false);
@@ -342,13 +330,28 @@ export default function FinanzasPage() {
     fetchData();
   }
 
-  // Cálculos
-  const totalGastos         = gastos.reduce((sum, g) => sum + Number(g.monto), 0);
-  const totalSueldos        = sueldos.reduce((sum, s) => sum + s.total, 0);
-  const totalEgresos        = totalGastos + totalSueldos;
+  async function handleGuardarConfig() {
+    try {
+      await authFetch(`${API}/finanzas/config?hotel_id=${HOTEL_ID}`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          categorias_reservas: categoriasReservas,
+          categorias_cenas: categoriasCenas,
+          empleados_reservas: empleadosReservas,
+          empleados_cenas: empleadosCenas,
+        }),
+      });
+      toast.success("Configuración guardada");
+      setModalConfig(false);
+    } catch (e) { toast.error("Error al guardar configuración") }
+  }
+
+  const totalGastos = gastos.reduce((sum, g) => sum + Number(g.monto), 0);
+  const totalSueldos = sueldos.reduce((sum, s) => sum + s.total, 0);
+  const totalEgresos = totalGastos + totalSueldos;
   const totalIngresosBrutos = ingresosMes + ingresosCenas;
-  const resultadoNeto       = totalIngresosBrutos - totalEgresos;
-  const mesAnteriorNombre   = MESES[mes === 0 ? 11 : mes - 1];
+  const resultadoNeto = totalIngresosBrutos - totalEgresos;
+  const mesAnteriorNombre = MESES[mes === 0 ? 11 : mes - 1];
   const anios = Array.from({ length: 3 }, (_, i) => hoy.getFullYear() - 1 + i);
 
   const gastosPorCategoria: Record<string, number> = {};
@@ -361,7 +364,7 @@ export default function FinanzasPage() {
 
   const ingresosPorCanal: Record<string, number> = { cenas: ingresosCenas };
   detalleIngresos.forEach((d: any) => {
-    const canal = d.es_grupo ? "grupo" : d.es_single ? "single" : "directo";
+    const canal = d.canal || (d.es_grupo ? "grupo" : "directo");
     ingresosPorCanal[canal] = (ingresosPorCanal[canal] || 0) + d.subtotal;
   });
   const CANAL_COLORES: Record<string, string> = {
@@ -371,17 +374,15 @@ export default function FinanzasPage() {
     .filter(([, v]) => v > 0)
     .map(([k, v]) => ({ label: k, valor: v, color: CANAL_COLORES[k] || "#94a3b8" }));
 
-  // Sección reservas
-  const gastosDeReservas  = gastos.filter(g => categoriasReservas.includes(g.categoria));
+  const gastosDeReservas = gastos.filter(g => categoriasReservas.includes(g.categoria));
   const sueldosDeReservas = sueldos.filter(s => empleadosReservas.includes(s.user_id));
   const totalEgresosReservas = gastosDeReservas.reduce((s, g) => s + Number(g.monto), 0) + sueldosDeReservas.reduce((s, su) => s + su.total, 0);
   const resultadoReservas = ingresosMes - totalEgresosReservas;
 
-  // Sección cenas
-  const gastosDeaCenas  = gastos.filter(g => categoriasCenas.includes(g.categoria));
-  const sueldosDeCenas  = sueldos.filter(s => empleadosCenas.includes(s.user_id));
+  const gastosDeaCenas = gastos.filter(g => categoriasCenas.includes(g.categoria));
+  const sueldosDeCenas = sueldos.filter(s => empleadosCenas.includes(s.user_id));
   const totalEgresosCenas = gastosDeaCenas.reduce((s, g) => s + Number(g.monto), 0) + sueldosDeCenas.reduce((s, su) => s + su.total, 0);
-  const resultadoCenas  = ingresosCenas - totalEgresosCenas;
+  const resultadoCenas = ingresosCenas - totalEgresosCenas;
 
   function toggleCategoria(cat: string, tipo: "reservas" | "cenas") {
     if (tipo === "reservas") setCategoriasReservas(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]);
@@ -489,9 +490,7 @@ export default function FinanzasPage() {
       <Card>
         <CardHeader className="cursor-pointer" onClick={() => setExpandDetalleReservas(v => !v)}>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
-              <DollarSign className="size-4" />Sección Reservas
-            </CardTitle>
+            <CardTitle className="text-base flex items-center gap-2"><DollarSign className="size-4" />Sección Reservas</CardTitle>
             <div className="flex items-center gap-4">
               <div className="text-sm"><span className="text-muted-foreground">Ingresos: </span><span className="font-semibold text-green-600">${ingresosMes.toLocaleString("es-AR")}</span></div>
               <div className="text-sm"><span className="text-muted-foreground">Egresos: </span><span className="font-semibold text-destructive">${totalEgresosReservas.toLocaleString("es-AR")}</span></div>
@@ -505,17 +504,10 @@ export default function FinanzasPage() {
         {expandDetalleReservas && (
           <CardContent>
             <div className="grid sm:grid-cols-2 gap-4">
-              {/* Detalle ingresos reservas */}
               <div>
                 <p className="text-sm font-semibold mb-2 text-green-600">Ingresos por habitación</p>
                 <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Hab.</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
+                  <TableHeader><TableRow><TableHead>Hab.</TableHead><TableHead>Tipo</TableHead><TableHead>Total</TableHead></TableRow></TableHeader>
                   <TableBody>
                     {detalleIngresos.map((d: any) => (
                       <TableRow key={d.numero}>
@@ -531,20 +523,13 @@ export default function FinanzasPage() {
                   </TableBody>
                 </Table>
               </div>
-              {/* Detalle egresos reservas */}
               <div>
                 <p className="text-sm font-semibold mb-2 text-destructive">Egresos asignados</p>
                 {gastosDeReservas.length === 0 && sueldosDeReservas.length === 0 ? (
                   <p className="text-xs text-muted-foreground py-4">Configurá categorías y empleados de reservas con el botón Configurar</p>
                 ) : (
                   <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Descripción</TableHead>
-                        <TableHead>Cat.</TableHead>
-                        <TableHead>Monto</TableHead>
-                      </TableRow>
-                    </TableHeader>
+                    <TableHeader><TableRow><TableHead>Descripción</TableHead><TableHead>Cat.</TableHead><TableHead>Monto</TableHead></TableRow></TableHeader>
                     <TableBody>
                       {gastosDeReservas.map(g => (
                         <TableRow key={g.id}>
@@ -593,7 +578,6 @@ export default function FinanzasPage() {
         {expandDetalleCenas && (
           <CardContent>
             <div className="grid sm:grid-cols-2 gap-4">
-              {/* Detalle ingresos cenas */}
               <div>
                 <p className="text-sm font-semibold mb-2" style={{ color: "#a855f7" }}>Ingresos por cenas</p>
                 {ingresosCenas === 0 ? (
@@ -605,20 +589,13 @@ export default function FinanzasPage() {
                   </div>
                 )}
               </div>
-              {/* Detalle egresos cenas */}
               <div>
                 <p className="text-sm font-semibold mb-2 text-destructive">Egresos asignados</p>
                 {gastosDeaCenas.length === 0 && sueldosDeCenas.length === 0 ? (
                   <p className="text-xs text-muted-foreground py-4">Configurá categorías y empleados de cenas con el botón Configurar</p>
                 ) : (
                   <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Descripción</TableHead>
-                        <TableHead>Cat.</TableHead>
-                        <TableHead>Monto</TableHead>
-                      </TableRow>
-                    </TableHeader>
+                    <TableHeader><TableRow><TableHead>Descripción</TableHead><TableHead>Cat.</TableHead><TableHead>Monto</TableHead></TableRow></TableHeader>
                     <TableBody>
                       {gastosDeaCenas.map(g => (
                         <TableRow key={g.id}>
@@ -668,10 +645,8 @@ export default function FinanzasPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead>Descripción</TableHead>
-                    <TableHead>Categoría</TableHead>
-                    <TableHead>Monto</TableHead>
+                    <TableHead>Fecha</TableHead><TableHead>Descripción</TableHead>
+                    <TableHead>Categoría</TableHead><TableHead>Monto</TableHead>
                     <TableHead className="w-[80px]"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -681,9 +656,7 @@ export default function FinanzasPage() {
                       <TableCell className="text-sm">{format(new Date(g.fecha + "T12:00:00"), "dd/MM/yyyy")}</TableCell>
                       <TableCell className="font-medium">{g.descripcion}</TableCell>
                       <TableCell>
-                        <Badge style={{ backgroundColor: CATEGORIA_COLORES[g.categoria] || "#6b7280", color: "#fff" }} className="capitalize">
-                          {g.categoria}
-                        </Badge>
+                        <Badge style={{ backgroundColor: CATEGORIA_COLORES[g.categoria] || "#6b7280", color: "#fff" }} className="capitalize">{g.categoria}</Badge>
                       </TableCell>
                       <TableCell className="font-semibold text-destructive">${Number(g.monto).toLocaleString("es-AR")}</TableCell>
                       <TableCell>
@@ -733,13 +706,9 @@ export default function FinanzasPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Empleado</TableHead>
-                    <TableHead>Categoría</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Sueldo fijo</TableHead>
-                    <TableHead>Hs extra / trabajadas</TableHead>
-                    <TableHead>$/hora</TableHead>
-                    <TableHead>Total</TableHead>
+                    <TableHead>Empleado</TableHead><TableHead>Categoría</TableHead><TableHead>Tipo</TableHead>
+                    <TableHead>Sueldo fijo</TableHead><TableHead>Hs extra / trabajadas</TableHead>
+                    <TableHead>$/hora</TableHead><TableHead>Total</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -774,19 +743,10 @@ export default function FinanzasPage() {
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>Agregar gasto</DialogTitle></DialogHeader>
           <div className="flex flex-col gap-4 py-2">
-            <div className="flex flex-col gap-2">
-              <Label>Fecha *</Label>
-              <Input type="date" value={form.fecha} onChange={e => setForm(f => ({ ...f, fecha: e.target.value }))} />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label>Descripción *</Label>
-              <Input value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} placeholder="Ej: Reparación aire acondicionado" />
-            </div>
+            <div className="flex flex-col gap-2"><Label>Fecha *</Label><Input type="date" value={form.fecha} onChange={e => setForm(f => ({ ...f, fecha: e.target.value }))} /></div>
+            <div className="flex flex-col gap-2"><Label>Descripción *</Label><Input value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} placeholder="Ej: Reparación aire acondicionado" /></div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <Label>Monto ($) *</Label>
-                <Input type="number" value={form.monto} onChange={e => setForm(f => ({ ...f, monto: e.target.value }))} placeholder="0" />
-              </div>
+              <div className="flex flex-col gap-2"><Label>Monto ($) *</Label><Input type="number" value={form.monto} onChange={e => setForm(f => ({ ...f, monto: e.target.value }))} placeholder="0" /></div>
               <div className="flex flex-col gap-2">
                 <Label>Categoría</Label>
                 <Select value={form.categoria} onValueChange={v => setForm(f => ({ ...f, categoria: v }))}>
@@ -795,10 +755,7 @@ export default function FinanzasPage() {
                 </Select>
               </div>
             </div>
-            <div className="flex flex-col gap-2">
-              <Label>Notas</Label>
-              <Input value={form.notas} onChange={e => setForm(f => ({ ...f, notas: e.target.value }))} placeholder="Opcional..." />
-            </div>
+            <div className="flex flex-col gap-2"><Label>Notas</Label><Input value={form.notas} onChange={e => setForm(f => ({ ...f, notas: e.target.value }))} placeholder="Opcional..." /></div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setModalOpen(false)}>Cancelar</Button>
@@ -812,19 +769,10 @@ export default function FinanzasPage() {
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>Editar gasto</DialogTitle></DialogHeader>
           <div className="flex flex-col gap-4 py-2">
-            <div className="flex flex-col gap-2">
-              <Label>Fecha *</Label>
-              <Input type="date" value={formEditar.fecha} onChange={e => setFormEditar(f => ({ ...f, fecha: e.target.value }))} />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label>Descripción *</Label>
-              <Input value={formEditar.descripcion} onChange={e => setFormEditar(f => ({ ...f, descripcion: e.target.value }))} />
-            </div>
+            <div className="flex flex-col gap-2"><Label>Fecha *</Label><Input type="date" value={formEditar.fecha} onChange={e => setFormEditar(f => ({ ...f, fecha: e.target.value }))} /></div>
+            <div className="flex flex-col gap-2"><Label>Descripción *</Label><Input value={formEditar.descripcion} onChange={e => setFormEditar(f => ({ ...f, descripcion: e.target.value }))} /></div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <Label>Monto ($) *</Label>
-                <Input type="number" value={formEditar.monto} onChange={e => setFormEditar(f => ({ ...f, monto: e.target.value }))} />
-              </div>
+              <div className="flex flex-col gap-2"><Label>Monto ($) *</Label><Input type="number" value={formEditar.monto} onChange={e => setFormEditar(f => ({ ...f, monto: e.target.value }))} /></div>
               <div className="flex flex-col gap-2">
                 <Label>Categoría</Label>
                 <Select value={formEditar.categoria} onValueChange={v => setFormEditar(f => ({ ...f, categoria: v }))}>
@@ -833,10 +781,7 @@ export default function FinanzasPage() {
                 </Select>
               </div>
             </div>
-            <div className="flex flex-col gap-2">
-              <Label>Notas</Label>
-              <Input value={formEditar.notas} onChange={e => setFormEditar(f => ({ ...f, notas: e.target.value }))} placeholder="Opcional..." />
-            </div>
+            <div className="flex flex-col gap-2"><Label>Notas</Label><Input value={formEditar.notas} onChange={e => setFormEditar(f => ({ ...f, notas: e.target.value }))} placeholder="Opcional..." /></div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setModalEditarGasto(false)}>Cancelar</Button>
@@ -853,12 +798,8 @@ export default function FinanzasPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Hab.</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Noches</TableHead>
-                  <TableHead>Precio/noche</TableHead>
-                  <TableHead>Reserva</TableHead>
-                  <TableHead>Subtotal</TableHead>
+                  <TableHead>Hab.</TableHead><TableHead>Tipo</TableHead><TableHead>Noches</TableHead>
+                  <TableHead>Precio/noche</TableHead><TableHead>Reserva</TableHead><TableHead>Subtotal</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -920,7 +861,10 @@ export default function FinanzasPage() {
             </div>
             <Separator />
             <div className="flex flex-col gap-3">
-              <h3 className="font-semibold flex items-center gap-2"><UtensilsCrossed className="size-4" style={{ color: "#a855f7" }} />Sección Cenas — Categorías de gastos</h3>
+              <h3 className="font-semibold flex items-center gap-2">
+                <UtensilsCrossed className="size-4" style={{ color: "#a855f7" }} />
+                Sección Cenas — Categorías de gastos
+              </h3>
               <div className="flex flex-wrap gap-2">
                 {TODAS_CATEGORIAS_GASTO.map(c => (
                   <button key={c} onClick={() => toggleCategoria(c, "cenas")}
@@ -941,7 +885,8 @@ export default function FinanzasPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={() => setModalConfig(false)}>Listo</Button>
+            <Button variant="outline" onClick={() => setModalConfig(false)}>Cancelar</Button>
+            <Button onClick={handleGuardarConfig}>Guardar y cerrar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
