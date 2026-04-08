@@ -343,33 +343,45 @@ def crear_reserva(
     return reservation
 
 
-@router.get(
-    "/reservas",
-    response_model=list[schemas.ReservationOut],
-    summary="Listar reservas",
-    tags=["Reservas"],
-)
+@router.get("/reservas", response_model=list[schemas.ReservationOut], summary="Listar reservas", tags=["Reservas"])
 def get_reservas(
-    hotel_id:  int           = Depends(get_hotel_id),
-    status:    Optional[str] = Query(None, description="confirmed/pending/cancelled/no_show"),
-    room_id:   Optional[int] = Query(None),
+    hotel_id:  int            = Depends(get_hotel_id),
+    status:    Optional[str]  = Query(None),
+    room_id:   Optional[int]  = Query(None),
     desde:     Optional[date] = Query(None),
     hasta:     Optional[date] = Query(None),
     db:        Session        = Depends(get_db),
 ):
-    query = db.query(models.Reservation).filter(
-        models.Reservation.hotel_id == hotel_id
-    )
+    from sqlalchemy import text
+    query = """
+        SELECT r.*, 
+               ro.number as room_number, ro.type as room_type,
+               g.name as guest_name,
+               c.name as channel_name,
+               gr.name as group_name
+        FROM reservations r
+        LEFT JOIN rooms ro ON ro.id = r.room_id
+        LEFT JOIN guests g ON g.id = r.guest_id
+        LEFT JOIN channels c ON c.id = r.channel_id
+        LEFT JOIN groups gr ON gr.id = r.group_id
+        WHERE r.hotel_id = :hotel_id
+    """
+    params: dict = {"hotel_id": hotel_id}
     if status:
-        query = query.filter(models.Reservation.status == status)
+        query += " AND r.status = :status"
+        params["status"] = status
     if room_id:
-        query = query.filter(models.Reservation.room_id == room_id)
+        query += " AND r.room_id = :room_id"
+        params["room_id"] = room_id
     if desde:
-        query = query.filter(models.Reservation.check_in >= desde)
+        query += " AND r.check_in >= :desde"
+        params["desde"] = desde
     if hasta:
-        query = query.filter(models.Reservation.check_out <= hasta)
-
-    return query.order_by(models.Reservation.check_in).all()
+        query += " AND r.check_out <= :hasta"
+        params["hasta"] = hasta
+    query += " ORDER BY r.check_in"
+    result = db.execute(text(query), params).fetchall()
+    return [dict(r._mapping) for r in result]
 
 
 @router.patch(
@@ -1574,5 +1586,47 @@ def delete_stock_movimiento(movimiento_id: int, hotel_id: int = Depends(get_hote
           AND notas LIKE 'Cantidad:%'
           AND descripcion LIKE 'Stock:%'
     """), {"hotel_id": hotel_id, "fecha": mov.fecha, "monto": mov.precio_total})
+    db.commit()
+    return {"ok": True}
+
+# ══════════════════════════════════════════════════════════════
+# FINANZAS CONFIG
+# ══════════════════════════════════════════════════════════════
+
+@router.get("/finanzas/config", tags=["Finanzas"])
+def get_finanzas_config(hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    result = db.execute(text("""
+        SELECT * FROM finanzas_config WHERE hotel_id = :hotel_id
+    """), {"hotel_id": hotel_id}).fetchone()
+    if not result:
+        return {
+            "categorias_reservas": [],
+            "categorias_cenas": [],
+            "empleados_reservas": [],
+            "empleados_cenas": [],
+        }
+    return dict(result._mapping)
+
+
+@router.post("/finanzas/config", status_code=200, tags=["Finanzas"])
+def save_finanzas_config(data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    db.execute(text("""
+        INSERT INTO finanzas_config (hotel_id, categorias_reservas, categorias_cenas, empleados_reservas, empleados_cenas, updated_at)
+        VALUES (:hotel_id, :categorias_reservas, :categorias_cenas, :empleados_reservas, :empleados_cenas, now())
+        ON CONFLICT (hotel_id) DO UPDATE SET
+            categorias_reservas = :categorias_reservas,
+            categorias_cenas    = :categorias_cenas,
+            empleados_reservas  = :empleados_reservas,
+            empleados_cenas     = :empleados_cenas,
+            updated_at          = now()
+    """), {
+        "hotel_id":             hotel_id,
+        "categorias_reservas":  data.get("categorias_reservas", []),
+        "categorias_cenas":     data.get("categorias_cenas", []),
+        "empleados_reservas":   data.get("empleados_reservas", []),
+        "empleados_cenas":      data.get("empleados_cenas", []),
+    })
     db.commit()
     return {"ok": True}
