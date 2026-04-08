@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import {
   LayoutDashboard, BedDouble, Users, CalendarPlus,
   ClipboardList, Building2, DollarSign, LogOut, Users2,ClipboardCheck,
-  TrendingUp,Settings,LayoutGrid
+  TrendingUp,Settings,LayoutGrid, Package
 } from "lucide-react"
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
@@ -26,6 +26,7 @@ const menuItems = [
   { title: "Empleados",     href: "/empleados",      icon: Users2          },
   { title: "Fichajes", href: "/fichajes", icon: ClipboardCheck             },
   { title: "Finanzas", href: "/finanzas", icon: TrendingUp                 },
+  { title: "Stock", href: "/stock", icon: Package                          },
   { title: "Configuración", href: "/configuracion", icon: Settings         },
   { title: "Grupos", href: "/grupos", icon: Users                          },
   { title: "Grilla", href: "/grilla", icon: LayoutGrid                     },
