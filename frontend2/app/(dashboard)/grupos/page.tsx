@@ -341,11 +341,13 @@ export default function GruposPage() {
 
   // Generar días del grupo para las cenas
   const diasGrupo = grupoActivo && grupoActivo.arrival_date && grupoActivo.departure_date
-    ? eachDayOfInterval({
-        start: parseISO(grupoActivo.arrival_date),
-        end:   new Date(new Date(grupoActivo.departure_date).getTime() - 86400000)
-      })
-    : []
+  ? (() => {
+      const start = new Date(grupoActivo.arrival_date + "T12:00:00")
+      const end   = new Date(grupoActivo.departure_date + "T12:00:00")
+      end.setDate(end.getDate() - 1)
+      return eachDayOfInterval({ start, end })
+    })()
+  : []
 
   const totalCenas = cenas.reduce((sum, c) => sum + Number(c.total), 0)
 
