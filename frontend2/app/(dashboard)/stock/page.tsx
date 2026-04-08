@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Plus, Package, ShoppingCart, Trash2, Pencil, Search, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Package, ShoppingCart, Trash2, Pencil, Search, ChevronDown, ChevronUp, X, Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +34,8 @@ const CATEGORIA_COLORES: Record<string, string> = {
   obra: "#ef4444",
 };
 
+const UNIDADES = ["unidad", "kg", "litro", "caja", "paquete", "rollo", "bolsa", "docena"];
+
 interface Producto {
   id: number;
   hotel_id: number;
@@ -58,7 +60,25 @@ interface Movimiento {
   notas: string | null;
 }
 
+interface ItemCompra {
+  producto_id: string;
+  nombre_producto: string;
+  unidad: string;
+  cantidad: string;
+  precio_unitario: string;
+  es_nuevo: boolean;
+  categoria_nuevo: string;
+  unidad_nuevo: string;
+}
+
+const itemCompraVacio = (): ItemCompra => ({
+  producto_id: "", nombre_producto: "", unidad: "unidad",
+  cantidad: "", precio_unitario: "", es_nuevo: false,
+  categoria_nuevo: "desayuno", unidad_nuevo: "unidad",
+});
+
 const hoy = new Date();
+const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
 export default function StockPage() {
   const [productos, setProductos] = useState<Producto[]>([]);
@@ -66,31 +86,33 @@ export default function StockPage() {
   const [loading, setLoading] = useState(true);
   const [loadingMov, setLoadingMov] = useState(false);
 
-  // Filtros
   const [categoriaFilter, setCategoriaFilter] = useState("todas");
   const [busqueda, setBusqueda] = useState("");
   const [cantidadFilter, setCantidadFilter] = useState("todos");
 
-  // Mes/año movimientos
   const [mes, setMes] = useState(hoy.getMonth() + 1);
   const [anio, setAnio] = useState(hoy.getFullYear());
 
-  // Modales
   const [modalProducto, setModalProducto] = useState(false);
   const [modalCompra, setModalCompra] = useState(false);
+  const [modalCompraRapida, setModalCompraRapida] = useState(false);
   const [productoEditando, setProductoEditando] = useState<Producto | null>(null);
+  const [productoRapido, setProductoRapido] = useState<Producto | null>(null);
   const [guardando, setGuardando] = useState(false);
 
-  // Expandir categorías
   const [expandidas, setExpandidas] = useState<Record<string, boolean>>({});
 
-  // Forms
   const [formProducto, setFormProducto] = useState({ nombre: "", categoria: "desayuno", unidad: "unidad" });
-  const [formCompra, setFormCompra] = useState({
-    producto_id: "", cantidad: "", precio_unitario: "", fecha: format(new Date(), "yyyy-MM-dd"), notas: ""
-  });
 
-  const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  // Compra masiva con búsqueda predictiva
+  const [fechaCompra, setFechaCompra] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [itemsCompra, setItemsCompra] = useState<ItemCompra[]>([itemCompraVacio()]);
+  const [busquedasItems, setBusquedasItems] = useState<string[]>([""]);
+  const [sugerenciasAbiertas, setSugerenciasAbiertas] = useState<boolean[]>([false]);
+
+  // Compra rápida
+  const [compraRapida, setCompraRapida] = useState({ cantidad: "", precio_unitario: "" });
+
   const anios = Array.from({ length: 3 }, (_, i) => hoy.getFullYear() - 1 + i);
 
   useEffect(() => { fetchProductos() }, []);
@@ -112,6 +134,135 @@ export default function StockPage() {
       setMovimientos(Array.isArray(data) ? data : []);
     } catch (e) { console.error(e) }
     finally { setLoadingMov(false) }
+  }
+
+  // ── Búsqueda predictiva ─────────────────────────────────
+  function getSugerencias(busq: string): Producto[] {
+    if (!busq.trim()) return productos.filter(p => p.activo).slice(0, 8);
+    return productos.filter(p =>
+      p.activo && p.nombre.toLowerCase().includes(busq.toLowerCase())
+    ).slice(0, 8);
+  }
+
+  function seleccionarProducto(idx: number, producto: Producto) {
+    setItemsCompra(prev => prev.map((item, i) => i === idx ? {
+      ...item,
+      producto_id: producto.id.toString(),
+      nombre_producto: producto.nombre,
+      unidad: producto.unidad,
+      es_nuevo: false,
+    } : item));
+    setBusquedasItems(prev => prev.map((b, i) => i === idx ? producto.nombre : b));
+    setSugerenciasAbiertas(prev => prev.map((s, i) => i === idx ? false : s));
+  }
+
+  function marcarComoNuevo(idx: number, nombre: string) {
+    setItemsCompra(prev => prev.map((item, i) => i === idx ? {
+      ...item,
+      producto_id: "",
+      nombre_producto: nombre,
+      es_nuevo: true,
+    } : item));
+    setSugerenciasAbiertas(prev => prev.map((s, i) => i === idx ? false : s));
+  }
+
+  function agregarItem() {
+    setItemsCompra(prev => [...prev, itemCompraVacio()]);
+    setBusquedasItems(prev => [...prev, ""]);
+    setSugerenciasAbiertas(prev => [...prev, false]);
+  }
+
+  function eliminarItem(idx: number) {
+    setItemsCompra(prev => prev.filter((_, i) => i !== idx));
+    setBusquedasItems(prev => prev.filter((_, i) => i !== idx));
+    setSugerenciasAbiertas(prev => prev.filter((_, i) => i !== idx));
+  }
+
+  function updateItem(idx: number, field: keyof ItemCompra, value: string) {
+    setItemsCompra(prev => prev.map((item, i) => i === idx ? { ...item, [field]: value } : item));
+  }
+
+  // ── Guardar compra masiva ───────────────────────────────
+  async function handleGuardarCompra() {
+    const validos = itemsCompra.filter(item =>
+      (item.producto_id || item.es_nuevo) && item.cantidad
+    );
+    if (validos.length === 0) { toast.error("Cargá al menos un producto con cantidad"); return; }
+
+    setGuardando(true);
+    try {
+      for (const item of validos) {
+        let productoId = item.producto_id;
+
+        // Si es nuevo, crearlo primero
+        if (item.es_nuevo) {
+          const res = await authFetch(`${API}/stock/productos?hotel_id=${HOTEL_ID}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              nombre: item.nombre_producto,
+              categoria: item.categoria_nuevo,
+              unidad: item.unidad_nuevo,
+            }),
+          }).then(r => r.json());
+          productoId = res.id.toString();
+        }
+
+        await authFetch(`${API}/stock/movimientos?hotel_id=${HOTEL_ID}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            producto_id: parseInt(productoId),
+            cantidad: parseFloat(item.cantidad),
+            precio_unitario: parseFloat(item.precio_unitario) || 0,
+            fecha: fechaCompra,
+            nombre_producto: item.nombre_producto,
+            unidad: item.unidad,
+          }),
+        });
+      }
+
+      toast.success(`${validos.length} producto${validos.length > 1 ? "s" : ""} registrado${validos.length > 1 ? "s" : ""}`);
+      setModalCompra(false);
+      setItemsCompra([itemCompraVacio()]);
+      setBusquedasItems([""]);
+      setSugerenciasAbiertas([false]);
+      fetchProductos();
+      fetchMovimientos();
+    } catch (e) {
+      toast.error("Error al registrar compra");
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  // ── Compra rápida ───────────────────────────────────────
+  async function handleCompraRapida() {
+    if (!productoRapido || !compraRapida.cantidad) { toast.error("Completá la cantidad"); return; }
+    setGuardando(true);
+    try {
+      await authFetch(`${API}/stock/movimientos?hotel_id=${HOTEL_ID}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          producto_id: productoRapido.id,
+          cantidad: parseFloat(compraRapida.cantidad),
+          precio_unitario: parseFloat(compraRapida.precio_unitario) || 0,
+          fecha: format(new Date(), "yyyy-MM-dd"),
+          nombre_producto: productoRapido.nombre,
+          unidad: productoRapido.unidad,
+        }),
+      });
+      toast.success("Stock actualizado");
+      setModalCompraRapida(false);
+      setCompraRapida({ cantidad: "", precio_unitario: "" });
+      fetchProductos();
+      fetchMovimientos();
+    } catch (e) {
+      toast.error("Error al registrar");
+    } finally {
+      setGuardando(false);
+    }
   }
 
   async function handleGuardarProducto() {
@@ -139,36 +290,6 @@ export default function StockPage() {
     finally { setGuardando(false) }
   }
 
-  async function handleGuardarCompra() {
-    if (!formCompra.producto_id || !formCompra.cantidad) {
-      toast.error("Producto y cantidad son obligatorios");
-      return;
-    }
-    setGuardando(true);
-    try {
-      const producto = productos.find(p => p.id === parseInt(formCompra.producto_id));
-      await authFetch(`${API}/stock/movimientos?hotel_id=${HOTEL_ID}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          producto_id: parseInt(formCompra.producto_id),
-          cantidad: parseFloat(formCompra.cantidad),
-          precio_unitario: parseFloat(formCompra.precio_unitario) || 0,
-          fecha: formCompra.fecha,
-          notas: formCompra.notas || null,
-          nombre_producto: producto?.nombre || "",
-          unidad: producto?.unidad || "unidad",
-        }),
-      });
-      toast.success("Compra registrada");
-      setModalCompra(false);
-      setFormCompra({ producto_id: "", cantidad: "", precio_unitario: "", fecha: format(new Date(), "yyyy-MM-dd"), notas: "" });
-      fetchProductos();
-      fetchMovimientos();
-    } catch (e) { toast.error("Error al registrar") }
-    finally { setGuardando(false) }
-  }
-
   async function handleEliminarMovimiento(id: number) {
     await authFetch(`${API}/stock/movimientos/${id}?hotel_id=${HOTEL_ID}`, { method: "DELETE" });
     toast.success("Movimiento eliminado");
@@ -186,7 +307,6 @@ export default function StockPage() {
     fetchProductos();
   }
 
-  // Filtrar productos
   const productosFiltrados = productos.filter(p => {
     if (categoriaFilter !== "todas" && p.categoria !== categoriaFilter) return false;
     if (busqueda && !p.nombre.toLowerCase().includes(busqueda.toLowerCase())) return false;
@@ -195,7 +315,6 @@ export default function StockPage() {
     return true;
   });
 
-  // Agrupar por categoría
   const porCategoria: Record<string, Producto[]> = {};
   productosFiltrados.forEach(p => {
     if (!porCategoria[p.categoria]) porCategoria[p.categoria] = [];
@@ -206,7 +325,6 @@ export default function StockPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Stock</h2>
@@ -222,7 +340,10 @@ export default function StockPage() {
             Nuevo producto
           </Button>
           <Button onClick={() => {
-            setFormCompra({ producto_id: "", cantidad: "", precio_unitario: "", fecha: format(new Date(), "yyyy-MM-dd"), notas: "" });
+            setItemsCompra([itemCompraVacio()]);
+            setBusquedasItems([""]);
+            setSugerenciasAbiertas([false]);
+            setFechaCompra(format(new Date(), "yyyy-MM-dd"));
             setModalCompra(true);
           }} className="gap-2">
             <ShoppingCart className="size-4" />
@@ -290,7 +411,7 @@ export default function StockPage() {
                       <TableHead>Producto</TableHead>
                       <TableHead>Unidad</TableHead>
                       <TableHead>Stock actual</TableHead>
-                      <TableHead className="w-[100px]"></TableHead>
+                      <TableHead className="w-[120px]"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -308,6 +429,14 @@ export default function StockPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1">
+                            {/* Compra rápida */}
+                            <Button variant="ghost" size="sm" title="Agregar stock rápido" onClick={() => {
+                              setProductoRapido(p);
+                              setCompraRapida({ cantidad: "", precio_unitario: "" });
+                              setModalCompraRapida(true);
+                            }}>
+                              <Plus className="size-4 text-green-500" />
+                            </Button>
                             <Button variant="ghost" size="sm" onClick={() => {
                               setProductoEditando(p);
                               setFormProducto({ nombre: p.nombre, categoria: p.categoria, unidad: p.unidad });
@@ -359,51 +488,49 @@ export default function StockPage() {
           ) : movimientos.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-6">No hay compras registradas este mes</p>
           ) : (
-            <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead>Producto</TableHead>
-                    <TableHead>Categoría</TableHead>
-                    <TableHead>Cantidad</TableHead>
-                    <TableHead>Precio unit.</TableHead>
-                    <TableHead>Total</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Producto</TableHead>
+                  <TableHead>Categoría</TableHead>
+                  <TableHead>Cantidad</TableHead>
+                  <TableHead>Precio unit.</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {movimientos.map(m => (
+                  <TableRow key={m.id}>
+                    <TableCell className="text-sm">
+                      {format(new Date(m.fecha + "T12:00:00"), "dd/MM/yyyy", { locale: es })}
+                    </TableCell>
+                    <TableCell className="font-medium">{m.nombre}</TableCell>
+                    <TableCell>
+                      <Badge style={{ backgroundColor: CATEGORIA_COLORES[m.categoria] || "#6b7280", color: "#fff" }} className="capitalize">
+                        {m.categoria}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{m.cantidad} {m.unidad}</TableCell>
+                    <TableCell>${Number(m.precio_unitario).toLocaleString("es-AR")}</TableCell>
+                    <TableCell className="font-semibold text-destructive">
+                      ${Number(m.precio_total).toLocaleString("es-AR")}
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="sm" onClick={() => handleEliminarMovimiento(m.id)}>
+                        <Trash2 className="size-4 text-destructive" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {movimientos.map(m => (
-                    <TableRow key={m.id}>
-                      <TableCell className="text-sm">
-                        {format(new Date(m.fecha + "T12:00:00"), "dd/MM/yyyy", { locale: es })}
-                      </TableCell>
-                      <TableCell className="font-medium">{m.nombre}</TableCell>
-                      <TableCell>
-                        <Badge style={{ backgroundColor: CATEGORIA_COLORES[m.categoria] || "#6b7280", color: "#fff" }} className="capitalize">
-                          {m.categoria}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{m.cantidad} {m.unidad}</TableCell>
-                      <TableCell>${Number(m.precio_unitario).toLocaleString("es-AR")}</TableCell>
-                      <TableCell className="font-semibold text-destructive">
-                        ${Number(m.precio_total).toLocaleString("es-AR")}
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm" onClick={() => handleEliminarMovimiento(m.id)}>
-                          <Trash2 className="size-4 text-destructive" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  <TableRow>
-                    <TableCell colSpan={5} className="font-bold text-right">Total gastos del mes</TableCell>
-                    <TableCell className="font-bold text-destructive">${totalGastosMes.toLocaleString("es-AR")}</TableCell>
-                    <TableCell />
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </>
+                ))}
+                <TableRow>
+                  <TableCell colSpan={5} className="font-bold text-right">Total gastos del mes</TableCell>
+                  <TableCell className="font-bold text-destructive">${totalGastosMes.toLocaleString("es-AR")}</TableCell>
+                  <TableCell />
+                </TableRow>
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
@@ -433,14 +560,7 @@ export default function StockPage() {
               <Select value={formProducto.unidad} onValueChange={v => setFormProducto(f => ({ ...f, unidad: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="unidad">Unidad</SelectItem>
-                  <SelectItem value="kg">Kg</SelectItem>
-                  <SelectItem value="litro">Litro</SelectItem>
-                  <SelectItem value="caja">Caja</SelectItem>
-                  <SelectItem value="paquete">Paquete</SelectItem>
-                  <SelectItem value="rollo">Rollo</SelectItem>
-                  <SelectItem value="bolsa">Bolsa</SelectItem>
-                  <SelectItem value="docena">Docena</SelectItem>
+                  {UNIDADES.map(u => <SelectItem key={u} value={u} className="capitalize">{u}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -454,60 +574,176 @@ export default function StockPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal registrar compra */}
-      <Dialog open={modalCompra} onOpenChange={setModalCompra}>
+      {/* Modal compra rápida */}
+      <Dialog open={modalCompraRapida} onOpenChange={setModalCompraRapida}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Registrar compra</DialogTitle>
+            <DialogTitle>Agregar stock — {productoRapido?.nombre}</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col gap-4 py-2">
-            <div className="flex flex-col gap-2">
-              <Label>Producto *</Label>
-              <Select value={formCompra.producto_id} onValueChange={v => setFormCompra(f => ({ ...f, producto_id: v }))}>
-                <SelectTrigger><SelectValue placeholder="Seleccioná un producto..." /></SelectTrigger>
-                <SelectContent>
-                  {CATEGORIAS.map(cat => {
-                    const prods = productos.filter(p => p.categoria === cat && p.activo);
-                    if (prods.length === 0) return null;
-                    return (
-                      <div key={cat}>
-                        <p className="px-2 py-1 text-xs text-muted-foreground capitalize font-semibold">{cat}</p>
-                        {prods.map(p => (
-                          <SelectItem key={p.id} value={p.id.toString()}>{p.nombre}</SelectItem>
-                        ))}
-                      </div>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-2">
                 <Label>Cantidad *</Label>
-                <Input type="number" placeholder="0" value={formCompra.cantidad}
-                  onChange={e => setFormCompra(f => ({ ...f, cantidad: e.target.value }))} />
+                <Input type="number" placeholder="0" value={compraRapida.cantidad}
+                  onChange={e => setCompraRapida(f => ({ ...f, cantidad: e.target.value }))} />
               </div>
               <div className="flex flex-col gap-2">
                 <Label>Precio unitario ($)</Label>
-                <Input type="number" placeholder="0" value={formCompra.precio_unitario}
-                  onChange={e => setFormCompra(f => ({ ...f, precio_unitario: e.target.value }))} />
+                <Input type="number" placeholder="0" value={compraRapida.precio_unitario}
+                  onChange={e => setCompraRapida(f => ({ ...f, precio_unitario: e.target.value }))} />
               </div>
             </div>
-            {formCompra.cantidad && formCompra.precio_unitario && (
+            {compraRapida.cantidad && compraRapida.precio_unitario && (
               <p className="text-sm font-semibold text-destructive">
-                Total: ${(parseFloat(formCompra.cantidad) * parseFloat(formCompra.precio_unitario)).toLocaleString("es-AR")}
+                Total: ${(parseFloat(compraRapida.cantidad) * parseFloat(compraRapida.precio_unitario)).toLocaleString("es-AR")}
               </p>
             )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setModalCompraRapida(false)}>Cancelar</Button>
+            <Button onClick={handleCompraRapida} disabled={guardando}>
+              {guardando ? "Guardando..." : "Agregar stock"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal compra masiva con búsqueda predictiva */}
+      <Dialog open={modalCompra} onOpenChange={setModalCompra}>
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Registrar compra</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-2 overflow-y-auto flex-1">
             <div className="flex flex-col gap-2">
-              <Label>Fecha</Label>
-              <Input type="date" value={formCompra.fecha}
-                onChange={e => setFormCompra(f => ({ ...f, fecha: e.target.value }))} />
+              <Label>Fecha de compra</Label>
+              <Input type="date" value={fechaCompra} onChange={e => setFechaCompra(e.target.value)} className="w-[200px]" />
             </div>
-            <div className="flex flex-col gap-2">
-              <Label>Notas</Label>
-              <Input placeholder="Opcional..." value={formCompra.notas}
-                onChange={e => setFormCompra(f => ({ ...f, notas: e.target.value }))} />
-            </div>
+
+            <Separator />
+
+            {itemsCompra.map((item, idx) => (
+              <div key={idx} className="flex flex-col gap-3 p-3 border rounded-lg relative">
+                {itemsCompra.length > 1 && (
+                  <Button variant="ghost" size="sm" className="absolute top-2 right-2"
+                    onClick={() => eliminarItem(idx)}>
+                    <X className="size-4 text-destructive" />
+                  </Button>
+                )}
+                <p className="text-xs font-medium text-muted-foreground">Producto {idx + 1}</p>
+
+                {/* Búsqueda predictiva */}
+                <div className="flex flex-col gap-1 relative">
+                  <Label className="text-xs">Nombre del producto *</Label>
+                  <Input
+                    value={busquedasItems[idx]}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setBusquedasItems(prev => prev.map((b, i) => i === idx ? val : b));
+                      setSugerenciasAbiertas(prev => prev.map((s, i) => i === idx ? true : s));
+                      updateItem(idx, "nombre_producto", val);
+                      updateItem(idx, "producto_id", "");
+                      updateItem(idx, "es_nuevo", "");
+                    }}
+                    onFocus={() => setSugerenciasAbiertas(prev => prev.map((s, i) => i === idx ? true : s))}
+                    placeholder="Escribí para buscar o crear..."
+                  />
+                  {sugerenciasAbiertas[idx] && (
+                    <div className="absolute top-full left-0 right-0 z-50 bg-background border rounded-md shadow-lg mt-1 max-h-48 overflow-y-auto">
+                      {getSugerencias(busquedasItems[idx]).map(p => (
+                        <div key={p.id}
+                          className="px-3 py-2 hover:bg-muted cursor-pointer flex items-center justify-between text-sm"
+                          onMouseDown={() => seleccionarProducto(idx, p)}>
+                          <span>{p.nombre}</span>
+                          <Badge className="text-xs capitalize" style={{ backgroundColor: CATEGORIA_COLORES[p.categoria] || "#6b7280", color: "#fff" }}>
+                            {p.categoria}
+                          </Badge>
+                        </div>
+                      ))}
+                      {busquedasItems[idx].trim() && !productos.find(p => p.nombre.toLowerCase() === busquedasItems[idx].toLowerCase()) && (
+                        <div
+                          className="px-3 py-2 hover:bg-muted cursor-pointer flex items-center gap-2 text-sm border-t"
+                          onMouseDown={() => marcarComoNuevo(idx, busquedasItems[idx])}>
+                          <Plus className="size-3 text-green-500" />
+                          <span>Crear "<strong>{busquedasItems[idx]}</strong>"</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {item.producto_id && (
+                    <p className="text-xs text-green-600 flex items-center gap-1">
+                      <Check className="size-3" /> Producto existente
+                    </p>
+                  )}
+                  {item.es_nuevo && (
+                    <p className="text-xs text-blue-600 flex items-center gap-1">
+                      <Plus className="size-3" /> Se creará como producto nuevo
+                    </p>
+                  )}
+                </div>
+
+                {/* Si es nuevo, mostrar categoría y unidad */}
+                {item.es_nuevo && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <Label className="text-xs">Categoría</Label>
+                      <Select value={item.categoria_nuevo} onValueChange={v => updateItem(idx, "categoria_nuevo", v)}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {CATEGORIAS.map(c => <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label className="text-xs">Unidad</Label>
+                      <Select value={item.unidad_nuevo} onValueChange={v => updateItem(idx, "unidad_nuevo", v)}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {UNIDADES.map(u => <SelectItem key={u} value={u} className="capitalize">{u}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <Label className="text-xs">Cantidad *</Label>
+                    <Input type="number" placeholder="0" value={item.cantidad}
+                      onChange={e => updateItem(idx, "cantidad", e.target.value)} />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <Label className="text-xs">Precio unitario ($)</Label>
+                    <Input type="number" placeholder="0" value={item.precio_unitario}
+                      onChange={e => updateItem(idx, "precio_unitario", e.target.value)} />
+                  </div>
+                </div>
+                {item.cantidad && item.precio_unitario && (
+                  <p className="text-xs text-destructive font-semibold">
+                    Subtotal: ${(parseFloat(item.cantidad) * parseFloat(item.precio_unitario)).toLocaleString("es-AR")}
+                  </p>
+                )}
+              </div>
+            ))}
+
+            <Button variant="outline" size="sm" onClick={agregarItem} className="gap-2">
+              <Plus className="size-3" />
+              Agregar otro producto
+            </Button>
+
+            {/* Total */}
+            {itemsCompra.some(i => i.cantidad && i.precio_unitario) && (
+              <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                <span className="font-semibold">Total compra:</span>
+                <span className="font-bold text-destructive text-lg">
+                  ${itemsCompra.reduce((sum, i) => {
+                    const c = parseFloat(i.cantidad) || 0;
+                    const p = parseFloat(i.precio_unitario) || 0;
+                    return sum + c * p;
+                  }, 0).toLocaleString("es-AR")}
+                </span>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setModalCompra(false)}>Cancelar</Button>
