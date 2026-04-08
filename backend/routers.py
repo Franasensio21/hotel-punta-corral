@@ -1499,6 +1499,16 @@ def delete_stock_movimiento(movimiento_id: int, hotel_id: int = Depends(get_hote
         UPDATE stock_productos SET cantidad = cantidad - :cantidad
         WHERE id = :producto_id AND hotel_id = :hotel_id
     """), {"cantidad": mov.cantidad, "producto_id": mov.producto_id, "hotel_id": hotel_id})
+    # Borrar el movimiento
     db.execute(text("DELETE FROM stock_movimientos WHERE id = :id"), {"id": movimiento_id})
+    # Borrar el gasto asociado
+    db.execute(text("""
+        DELETE FROM gastos 
+        WHERE hotel_id = :hotel_id 
+          AND fecha = :fecha 
+          AND monto = :monto
+          AND notas LIKE 'Cantidad:%'
+          AND descripcion LIKE 'Stock:%'
+    """), {"hotel_id": hotel_id, "fecha": mov.fecha, "monto": mov.precio_total})
     db.commit()
     return {"ok": True}
