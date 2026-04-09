@@ -1112,6 +1112,11 @@ def update_grupo(grupo_id: int, data: dict, hotel_id: int = Depends(get_hotel_id
             "hotel_id":   hotel_id,
         })
 
+    # Si se desactivó incluye_cena, borrar todas las cenas del grupo
+    if "incluye_cena" in data and not data["incluye_cena"]:
+        db.execute(text("DELETE FROM cenas_grupo WHERE group_id = :id AND hotel_id = :hotel_id"),
+                {"id": grupo_id, "hotel_id": hotel_id})
+
     db.commit()
     return {"ok": True}
 
