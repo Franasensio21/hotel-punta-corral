@@ -362,14 +362,29 @@ export default function FinanzasPage() {
     .filter(([, v]) => v > 0)
     .map(([k, v]) => ({ label: k, valor: v, color: CATEGORIA_COLORES[k] || "#94a3b8" }));
 
-  const ingresosPorCanal: Record<string, number> = { cenas: ingresosCenas };
-  detalleIngresos.forEach((d: any) => {
-    const canal = d.canal || (d.es_grupo ? "grupo" : "directo");
-    ingresosPorCanal[canal] = (ingresosPorCanal[canal] || 0) + d.subtotal;
-  });
+  function normalizarCanal(canal: string, esGrupo: boolean): string {
+  if (esGrupo) return "grupo"
+  const c = (canal || "").toLowerCase()
+  if (c.includes("booking")) return "booking"
+  if (c.includes("gmail") || c.includes("email")) return "gmail"
+  if (c.includes("group")) return "grupo"
+  if (c.includes("direct") || c.includes("directa")) return "reserva directa"
+  return "otro"
+}
+
+const ingresosPorCanal: Record<string, number> = { cenas: ingresosCenas };
+detalleIngresos.forEach((d: any) => {
+  const canal = normalizarCanal(d.canal || "", d.es_grupo);
+  ingresosPorCanal[canal] = (ingresosPorCanal[canal] || 0) + d.subtotal;
+});
   const CANAL_COLORES: Record<string, string> = {
-    cenas: "#a855f7", grupo: "#facc15", single: "#f59e0b", directo: "#22c55e", booking: "#3b82f6",
-  };
+  cenas:            "#a855f7",
+  grupo:            "#facc15",
+  booking:          "#3b82f6",
+  gmail:            "#22c55e",
+  "reserva directa": "#f59e0b",
+  otro:             "#6b7280",
+};
   const datosGraficoIngresos = Object.entries(ingresosPorCanal)
     .filter(([, v]) => v > 0)
     .map(([k, v]) => ({ label: k, valor: v, color: CANAL_COLORES[k] || "#94a3b8" }));
