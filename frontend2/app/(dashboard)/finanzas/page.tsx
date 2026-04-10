@@ -305,7 +305,7 @@ export default function FinanzasPage() {
 
       for (const r of reservasConPrecio) {
         totalIngresosMes += parseFloat(r.precio_total);
-        const key = `room_${r.room_id}`;
+        const key = r.room_number || r.room_id.toString();
         if (!detalleTemp[key]) {
           detalleTemp[key] = {
             numero: r.room_number || r.room_id.toString(),
