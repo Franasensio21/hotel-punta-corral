@@ -192,8 +192,7 @@ export default function FinanzasPage() {
           const dispRes = await authFetch(`${API}/disponibilidad?fecha=${d}&hotel_id=${HOTEL_ID}`).then(r => r.json());
           const ocupadas = dispRes.habitaciones?.filter((h: any) => h.estado === "ocupada") || [];
           for (const hab of ocupadas) {
-            const reserva = reservasSinPrecio.find((r: any) => r.room_id === hab.room_id);
-            if (!reserva && reservasConPrecio.find((r: any) => r.room_id === hab.room_id)) continue;
+            if (reservasConPrecio.find((r: any) => r.room_id === hab.room_id)) continue;
             const esGrupo = !!hab.grupo;
             const esSingle = hab.tipo_ocupacion === "single";
             const tipoConsulta = esSingle ? "single" : hab.tipo;
