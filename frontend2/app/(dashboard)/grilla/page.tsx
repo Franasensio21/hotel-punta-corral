@@ -21,6 +21,7 @@ const CANALES: Record<number, { nombre: string; color: string }> = {
   3: { nombre: "Email",        color: "#fca5a5" },
   4: { nombre: "Grupo",        color: "#fde68a" },
   5: { nombre: "Estudiantil",  color: "#bbf7d0" },
+  6: { nombre: "Expedia",      color: "#e206ba" },
 }
 
 const COLOR_BORDER = "#e2e8f0"

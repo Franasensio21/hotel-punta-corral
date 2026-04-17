@@ -50,10 +50,11 @@ const TIPO_LABELS: Record<string, string> = {
 
 const CANALES = [
   { id: 1, nombre: "Booking.com" },
-  { id: 2, nombre: "Reserva directa" },
-  { id: 3, nombre: "Gmail / Email" },
+  { id: 2, nombre: "Directo" },
+  { id: 3, nombre: "Email" },
   { id: 4, nombre: "Grupo" },
-  { id: 5, nombre: "Otro" },
+  { id: 5, nombre: "Estudiantil" },
+  { id: 6, nombre: "Expedia" },
 ];
 
 export default function NuevaReservaPage() {
