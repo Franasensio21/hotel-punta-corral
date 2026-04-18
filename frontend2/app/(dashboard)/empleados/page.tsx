@@ -157,6 +157,7 @@ export default function EmpleadosPage() {
     horas_diarias: number | null;
     horas_extra_modalidad: string;
     dias_acumulados: number;
+    banco_dias: number;
   } | null>(null);
 
   useEffect(() => {
@@ -268,6 +269,14 @@ export default function EmpleadosPage() {
         total = totalMinsTrabajados * precioMinuto;
       }
 
+      // Traer banco de días real de la BD
+      const bancoRes = await authFetch(
+        `${API}/banco-dias?hotel_id=${HOTEL_ID}`,
+      ).then((r) => r.json());
+      const bancoEmpleado = Array.isArray(bancoRes)
+        ? bancoRes.find((b: any) => b.user_id === emp.id)
+        : null;
+
       setDashData({
         sueldo_fijo: sueldo.sueldo_fijo,
         horas_extra_mins: totalMinsExtra,
@@ -279,6 +288,9 @@ export default function EmpleadosPage() {
         horas_diarias: sueldo.horas_diarias || null,
         horas_extra_modalidad: sueldo.horas_extra_modalidad || "cobrar",
         dias_acumulados: diasAcumulados,
+        banco_dias: bancoEmpleado
+          ? parseFloat(bancoEmpleado.dias_disponibles)
+          : 0,
       });
     } catch (e) {
       console.error(e);
@@ -1065,10 +1077,47 @@ export default function EmpleadosPage() {
                       <span className="text-muted-foreground">
                         Días disponibles para tomar
                       </span>
-                      <span className="font-bold text-blue-600">
-                        {dashData.dias_acumulados} día
-                        {dashData.dias_acumulados !== 1 ? "s" : ""}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-blue-600">
+                          {dashData.banco_dias > 0 ? "+" : ""}
+                          {dashData.banco_dias} día
+                          {Math.abs(dashData.banco_dias) !== 1 ? "s" : ""}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-6 px-2 text-xs"
+                          onClick={() => {
+                            const nuevo = prompt(
+                              `Días en banco (actual: ${dashData!.banco_dias})`,
+                            );
+                            if (nuevo === null) return;
+                            const val = parseFloat(nuevo);
+                            if (isNaN(val)) return;
+                            authFetch(
+                              `${API}/banco-dias?hotel_id=${HOTEL_ID}`,
+                              {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                  user_id: empleadoDashboard!.id,
+                                  dias_disponibles: val,
+                                }),
+                              },
+                            ).then(() => {
+                              toast.success("Banco actualizado");
+                              if (empleadoDashboard)
+                                calcularDashboard(
+                                  empleadoDashboard,
+                                  dashMes,
+                                  dashAnio,
+                                );
+                            });
+                          }}
+                        >
+                          Editar
+                        </Button>
+                      </div>
                     </div>
                   ) : (
                     <>
