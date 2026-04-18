@@ -133,6 +133,7 @@ export default function FichajesPage() {
   const [fichajesDia, setFichajesDia] = useState<Fichaje[]>([]);
   const [fechaDia, setFechaDia] = useState<string>("");
   const [guardandoDia, setGuardandoDia] = useState(false);
+  const [ausenciasHoy, setAusenciasHoy] = useState<any[]>([]);
 
   useEffect(() => {
     fetchData();
@@ -146,14 +147,22 @@ export default function FichajesPage() {
     setLoading(true);
     try {
       const fechaStr = format(fecha, "yyyy-MM-dd");
-      const [fichajesData, empData] = await Promise.all([
+      const [fichajesData, empData, ausenciasData] = await Promise.all([
         authFetch(
           `${API}/fichajes?fecha=${fechaStr}&hotel_id=${HOTEL_ID}`,
         ).then((r) => r.json()),
         authFetch(`${API}/usuarios?hotel_id=${HOTEL_ID}`).then((r) => r.json()),
+        authFetch(
+          `${API}/ausencias?mes=${fecha.getMonth() + 1}&anio=${fecha.getFullYear()}&hotel_id=${HOTEL_ID}`,
+        ).then((r) => r.json()),
       ]);
       setFichajes(fichajesData);
       setEmpleados(empData.filter((e: Empleado) => e.active));
+      // Filtrar ausencias del día actual
+      const ausenciasHoy = Array.isArray(ausenciasData)
+        ? ausenciasData.filter((a: any) => a.fecha === fechaStr)
+        : [];
+      setAusenciasHoy(ausenciasHoy);
     } catch (e) {
       console.error(e);
     } finally {
@@ -362,21 +371,31 @@ export default function FichajesPage() {
   const anios = Array.from({ length: 3 }, (_, i) => hoy.getFullYear() - 1 + i);
 
   async function handleMarcarFalto(userId: number) {
+    try {
+      const fechaStr = format(fecha, "yyyy-MM-dd");
+      await authFetch(`${API}/ausencias?hotel_id=${HOTEL_ID}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: userId,
+          fecha: fechaStr,
+        }),
+      });
+      toast.success("Ausencia registrada");
+      fetchData();
+    } catch (e: any) {
+      const msg = await e?.response?.json?.().catch?.(() => null);
+      toast.error(msg?.detail || "Error al registrar ausencia");
+    }
+  }
+
+  async function handleEliminarAusencia(ausenciaId: number) {
   try {
-    const fechaStr = format(fecha, "yyyy-MM-dd");
-    await authFetch(`${API}/ausencias?hotel_id=${HOTEL_ID}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        user_id: userId,
-        fecha: fechaStr,
-      }),
-    });
-    toast.success("Ausencia registrada");
+    await authFetch(`${API}/ausencias/${ausenciaId}?hotel_id=${HOTEL_ID}`, { method: "DELETE" });
+    toast.success("Ausencia eliminada");
     fetchData();
-  } catch (e: any) {
-    const msg = await e?.response?.json?.().catch?.(() => null);
-    toast.error(msg?.detail || "Error al registrar ausencia");
+  } catch (e) {
+    toast.error("Error al eliminar ausencia");
   }
 }
   return (
@@ -543,7 +562,7 @@ export default function FichajesPage() {
         </CardContent>
       </Card>
 
-      {sinFichaje.length > 0 && (
+      {(sinFichaje.length > 0 || ausenciasHoy.length > 0) && (
         <Card style={{ borderColor: "#fecaca" }}>
           <CardHeader className="pb-3">
             <CardTitle className="text-base text-destructive">
@@ -552,30 +571,54 @@ export default function FichajesPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
-              {sinFichaje.map((e) => (
-                <div key={e.id} className="flex items-center gap-1">
+              {/* Empleados con ausencia marcada */}
+              {ausenciasHoy.map((a: any) => (
+                <div key={a.id} className="flex items-center gap-1">
                   <Badge
-                    variant="outline"
-                    className="gap-1 cursor-pointer hover:bg-muted"
-                    onClick={() => abrirNuevo(e.id.toString())}
+                    style={{ backgroundColor: "#ef4444", color: "#fff" }}
+                    className="gap-1"
                   >
-                    {e.name}
-                    {e.categoria && (
-                      <span className="text-muted-foreground capitalize">
-                        · {e.categoria}
-                      </span>
-                    )}
+                    {a.name} · Faltó
                   </Badge>
                   <Button
                     variant="ghost"
                     size="sm"
                     className="h-6 px-2 text-xs text-destructive hover:text-destructive"
-                    onClick={() => handleMarcarFalto(e.id)}
+                    onClick={() => handleEliminarAusencia(a.id)}
                   >
-                    Faltó
+                    <Trash2 className="size-3" />
                   </Button>
                 </div>
               ))}
+              {/* Empleados sin fichaje ni ausencia */}
+              {sinFichaje
+                .filter(
+                  (e) => !ausenciasHoy.find((a: any) => a.user_id === e.id),
+                )
+                .map((e) => (
+                  <div key={e.id} className="flex items-center gap-1">
+                    <Badge
+                      variant="outline"
+                      className="gap-1 cursor-pointer hover:bg-muted"
+                      onClick={() => abrirNuevo(e.id.toString())}
+                    >
+                      {e.name}
+                      {e.categoria && (
+                        <span className="text-muted-foreground capitalize">
+                          · {e.categoria}
+                        </span>
+                      )}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs text-destructive hover:text-destructive"
+                      onClick={() => handleMarcarFalto(e.id)}
+                    >
+                      Faltó
+                    </Button>
+                  </div>
+                ))}
             </div>
           </CardContent>
         </Card>
