@@ -1635,3 +1635,154 @@ def save_finanzas_config(data: dict, hotel_id: int = Depends(get_hotel_id), db: 
     })
     db.commit()
     return {"ok": True}
+
+# ══════════════════════════════════════════════════════════════
+# BANCO DE DÍAS Y AUSENCIAS
+# ══════════════════════════════════════════════════════════════
+
+@router.get("/banco-dias", tags=["Empleados"])
+def get_banco_dias(hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    result = db.execute(text("""
+        SELECT b.*, u.name, u.categoria
+        FROM banco_dias b
+        JOIN users u ON u.id = b.user_id
+        WHERE b.hotel_id = :hotel_id
+        ORDER BY u.name
+    """), {"hotel_id": hotel_id}).fetchall()
+    return [dict(r._mapping) for r in result]
+
+
+@router.post("/banco-dias", status_code=201, tags=["Empleados"])
+def upsert_banco_dias(data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    db.execute(text("""
+        INSERT INTO banco_dias (hotel_id, user_id, dias_disponibles, updated_at)
+        VALUES (:hotel_id, :user_id, :dias, now())
+        ON CONFLICT (hotel_id, user_id) DO UPDATE
+        SET dias_disponibles = :dias, updated_at = now()
+    """), {"hotel_id": hotel_id, "user_id": data["user_id"], "dias": data["dias_disponibles"]})
+    db.commit()
+    return {"ok": True}
+
+
+@router.patch("/banco-dias/{user_id}", tags=["Empleados"])
+def ajustar_banco_dias(user_id: int, data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    # delta puede ser positivo (suma días) o negativo (resta días)
+    delta = float(data["delta"])
+    db.execute(text("""
+        INSERT INTO banco_dias (hotel_id, user_id, dias_disponibles, updated_at)
+        VALUES (:hotel_id, :user_id, :delta, now())
+        ON CONFLICT (hotel_id, user_id) DO UPDATE
+        SET dias_disponibles = banco_dias.dias_disponibles + :delta, updated_at = now()
+    """), {"hotel_id": hotel_id, "user_id": user_id, "delta": delta})
+    db.commit()
+    return {"ok": True}
+
+
+@router.get("/ausencias", tags=["Empleados"])
+def get_ausencias(
+    hotel_id: int = Depends(get_hotel_id),
+    mes: int = Query(None),
+    anio: int = Query(None),
+    db: Session = Depends(get_db)
+):
+    from sqlalchemy import text
+    import datetime
+    hoy = datetime.date.today()
+    mes  = mes  or hoy.month
+    anio = anio or hoy.year
+    result = db.execute(text("""
+        SELECT a.*, u.name, u.categoria
+        FROM ausencias a
+        JOIN users u ON u.id = a.user_id
+        WHERE a.hotel_id = :hotel_id
+          AND EXTRACT(MONTH FROM a.fecha) = :mes
+          AND EXTRACT(YEAR  FROM a.fecha) = :anio
+        ORDER BY a.fecha DESC
+    """), {"hotel_id": hotel_id, "mes": mes, "anio": anio}).fetchall()
+    return [dict(r._mapping) for r in result]
+
+
+@router.post("/ausencias", status_code=201, tags=["Empleados"])
+def create_ausencia(data: dict, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
+    from sqlalchemy import text
+
+    user_id = data["user_id"]
+    fecha   = data["fecha"]
+
+    # Verificar que no exista ya una ausencia ese día
+    existente = db.execute(text("""
+        SELECT id FROM ausencias WHERE user_id = :user_id AND fecha = :fecha AND hotel_id = :hotel_id
+    """), {"user_id": user_id, "fecha": fecha, "hotel_id": hotel_id}).fetchone()
+    if existente:
+        raise HTTPException(status_code=400, detail="Ya existe una ausencia registrada para ese día")
+
+    # Traer sueldo del empleado para saber modalidad y horas diarias
+    sueldo = db.execute(text("""
+        SELECT tipo_empleado, horas_diarias, horas_extra_modalidad
+        FROM sueldos
+        WHERE user_id = :user_id AND hotel_id = :hotel_id AND activo = true
+        ORDER BY anio DESC NULLS LAST, mes DESC NULLS LAST
+        LIMIT 1
+    """), {"user_id": user_id, "hotel_id": hotel_id}).fetchone()
+
+    if not sueldo or sueldo.tipo_empleado != "fijo":
+        raise HTTPException(status_code=400, detail="Las ausencias solo aplican a empleados fijos")
+
+    horas_diarias = float(sueldo.horas_diarias or 5)
+
+    # Registrar ausencia
+    db.execute(text("""
+        INSERT INTO ausencias (hotel_id, user_id, fecha, horas_diarias, notas)
+        VALUES (:hotel_id, :user_id, :fecha, :horas_diarias, :notas)
+    """), {
+        "hotel_id":     hotel_id,
+        "user_id":      user_id,
+        "fecha":        fecha,
+        "horas_diarias": horas_diarias,
+        "notas":        data.get("notas"),
+    })
+
+    # Aplicar descuento según modalidad
+    if sueldo.horas_extra_modalidad == "acumular":
+        # Restar 1 día del banco
+        db.execute(text("""
+            INSERT INTO banco_dias (hotel_id, user_id, dias_disponibles, updated_at)
+            VALUES (:hotel_id, :user_id, -1, now())
+            ON CONFLICT (hotel_id, user_id) DO UPDATE
+            SET dias_disponibles = banco_dias.dias_disponibles - 1, updated_at = now()
+        """), {"hotel_id": hotel_id, "user_id": user_id})
+    # Para modalidad "cobrar" el descuento se calcula en finanzas al ver las horas
+
+    db.commit()
+    return {"ok": True}
+
+
+@router.delete("/ausencias/{ausencia_id}", tags=["Empleados"])
+def delete_ausencia(ausencia_id: int, hotel_id: int = Depends(get_hotel_id), db: Session = Depends(get_db)):
+    from sqlalchemy import text
+
+    ausencia = db.execute(text("""
+        SELECT a.*, s.horas_extra_modalidad
+        FROM ausencias a
+        JOIN sueldos s ON s.user_id = a.user_id AND s.hotel_id = a.hotel_id
+        WHERE a.id = :id AND a.hotel_id = :hotel_id
+        ORDER BY s.anio DESC NULLS LAST, s.mes DESC NULLS LAST
+        LIMIT 1
+    """), {"id": ausencia_id, "hotel_id": hotel_id}).fetchone()
+
+    if not ausencia:
+        raise HTTPException(status_code=404, detail="Ausencia no encontrada")
+
+    # Revertir el descuento si era acumular
+    if ausencia.horas_extra_modalidad == "acumular":
+        db.execute(text("""
+            UPDATE banco_dias SET dias_disponibles = dias_disponibles + 1, updated_at = now()
+            WHERE hotel_id = :hotel_id AND user_id = :user_id
+        """), {"hotel_id": hotel_id, "user_id": ausencia.user_id})
+
+    db.execute(text("DELETE FROM ausencias WHERE id = :id"), {"id": ausencia_id})
+    db.commit()
+    return {"ok": True}
