@@ -10,19 +10,57 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { authFetch, getUser } from "@/lib/auth";
 
-const API = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api/v1";
-const HOTEL_ID = (typeof window !== "undefined" ? getUser()?.hotel_id : null) ?? 1;
+const API =
+  (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api/v1";
+const HOTEL_ID =
+  (typeof window !== "undefined" ? getUser()?.hotel_id : null) ?? 1;
 
-const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const MESES = [
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
+];
 
 interface Fichaje {
   id: number;
@@ -77,8 +115,14 @@ export default function FichajesPage() {
   const [editando, setEditando] = useState<Fichaje | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState("");
-  const [turnos, setTurnos] = useState<Turno[]>([{ hora_entrada: "", hora_salida: "", notas: "" }]);
-  const [formEditar, setFormEditar] = useState({ hora_entrada: "", hora_salida: "", notas: "" });
+  const [turnos, setTurnos] = useState<Turno[]>([
+    { hora_entrada: "", hora_salida: "", notas: "" },
+  ]);
+  const [formEditar, setFormEditar] = useState({
+    hora_entrada: "",
+    hora_salida: "",
+    notas: "",
+  });
 
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState<string>("");
   const [mesSel, setMesSel] = useState(hoy.getMonth());
@@ -90,7 +134,9 @@ export default function FichajesPage() {
   const [fechaDia, setFechaDia] = useState<string>("");
   const [guardandoDia, setGuardandoDia] = useState(false);
 
-  useEffect(() => { fetchData() }, [fecha]);
+  useEffect(() => {
+    fetchData();
+  }, [fecha]);
 
   useEffect(() => {
     if (empleadoSeleccionado) fetchFichajesMes();
@@ -101,13 +147,18 @@ export default function FichajesPage() {
     try {
       const fechaStr = format(fecha, "yyyy-MM-dd");
       const [fichajesData, empData] = await Promise.all([
-        authFetch(`${API}/fichajes?fecha=${fechaStr}&hotel_id=${HOTEL_ID}`).then(r => r.json()),
-        authFetch(`${API}/usuarios?hotel_id=${HOTEL_ID}`).then(r => r.json()),
+        authFetch(
+          `${API}/fichajes?fecha=${fechaStr}&hotel_id=${HOTEL_ID}`,
+        ).then((r) => r.json()),
+        authFetch(`${API}/usuarios?hotel_id=${HOTEL_ID}`).then((r) => r.json()),
       ]);
       setFichajes(fichajesData);
       setEmpleados(empData.filter((e: Empleado) => e.active));
-    } catch (e) { console.error(e) }
-    finally { setLoading(false) }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function fetchFichajesMes() {
@@ -119,13 +170,18 @@ export default function FichajesPage() {
         Array.from({ length: diasMes }, (_, i) => {
           const d = format(new Date(anioSel, mesSel, i + 1), "yyyy-MM-dd");
           return authFetch(`${API}/fichajes?fecha=${d}&hotel_id=${HOTEL_ID}`)
-            .then(r => r.json())
-            .then((data: Fichaje[]) => data.filter(f => f.user_id === parseInt(empleadoSeleccionado)));
-        })
+            .then((r) => r.json())
+            .then((data: Fichaje[]) =>
+              data.filter((f) => f.user_id === parseInt(empleadoSeleccionado)),
+            );
+        }),
       );
       setFichajesMes(resultados.flat());
-    } catch (e) { console.error(e) }
-    finally { setLoadingMes(false) }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingMes(false);
+    }
   }
 
   function abrirNuevo(userId?: string) {
@@ -147,20 +203,25 @@ export default function FichajesPage() {
 
   function abrirDia(fechaStr: string, fichajesDelDia: Fichaje[]) {
     setFechaDia(fechaStr);
-    setFichajesDia(fichajesDelDia.map(f => ({ ...f })));
+    setFichajesDia(fichajesDelDia.map((f) => ({ ...f })));
     setModalDia(true);
   }
 
   function agregarTurno() {
-    setTurnos(prev => [...prev, { hora_entrada: "", hora_salida: "", notas: "" }]);
+    setTurnos((prev) => [
+      ...prev,
+      { hora_entrada: "", hora_salida: "", notas: "" },
+    ]);
   }
 
   function eliminarTurno(idx: number) {
-    setTurnos(prev => prev.filter((_, i) => i !== idx));
+    setTurnos((prev) => prev.filter((_, i) => i !== idx));
   }
 
   function updateTurno(idx: number, field: keyof Turno, value: string) {
-    setTurnos(prev => prev.map((t, i) => i === idx ? { ...t, [field]: value } : t));
+    setTurnos((prev) =>
+      prev.map((t, i) => (i === idx ? { ...t, [field]: value } : t)),
+    );
   }
 
   async function handleGuardar() {
@@ -188,15 +249,21 @@ export default function FichajesPage() {
       return;
     }
 
-    if (!selectedUserId) { toast.error("Seleccioná un empleado"); return; }
-    const turnosValidos = turnos.filter(t => t.hora_entrada || t.hora_salida);
-    if (turnosValidos.length === 0) { toast.error("Cargá al menos un turno"); return; }
+    if (!selectedUserId) {
+      toast.error("Seleccioná un empleado");
+      return;
+    }
+    const turnosValidos = turnos.filter((t) => t.hora_entrada || t.hora_salida);
+    if (turnosValidos.length === 0) {
+      toast.error("Cargá al menos un turno");
+      return;
+    }
 
     setGuardando(true);
     try {
       const fechaStr = format(fecha, "yyyy-MM-dd");
       await Promise.all(
-        turnosValidos.map(t =>
+        turnosValidos.map((t) =>
           authFetch(`${API}/fichajes?hotel_id=${HOTEL_ID}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -207,10 +274,12 @@ export default function FichajesPage() {
               hora_salida: t.hora_salida || null,
               notas: t.notas || null,
             }),
-          })
-        )
+          }),
+        ),
       );
-      toast.success(`${turnosValidos.length} turno${turnosValidos.length > 1 ? "s" : ""} cargado${turnosValidos.length > 1 ? "s" : ""}`);
+      toast.success(
+        `${turnosValidos.length} turno${turnosValidos.length > 1 ? "s" : ""} cargado${turnosValidos.length > 1 ? "s" : ""}`,
+      );
       setModalOpen(false);
       fetchData();
       if (empleadoSeleccionado) fetchFichajesMes();
@@ -222,7 +291,9 @@ export default function FichajesPage() {
   }
 
   async function handleEliminar(id: number) {
-    await authFetch(`${API}/fichajes/${id}?hotel_id=${HOTEL_ID}`, { method: "DELETE" });
+    await authFetch(`${API}/fichajes/${id}?hotel_id=${HOTEL_ID}`, {
+      method: "DELETE",
+    });
     toast.success("Fichaje eliminado");
     fetchData();
     if (empleadoSeleccionado) fetchFichajesMes();
@@ -232,7 +303,7 @@ export default function FichajesPage() {
     setGuardandoDia(true);
     try {
       await Promise.all(
-        fichajesDia.map(f =>
+        fichajesDia.map((f) =>
           authFetch(`${API}/fichajes/${f.id}?hotel_id=${HOTEL_ID}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
@@ -241,8 +312,8 @@ export default function FichajesPage() {
               hora_salida: f.hora_salida?.slice(0, 5) || null,
               notas: f.notas || null,
             }),
-          })
-        )
+          }),
+        ),
       );
       toast.success("Turnos actualizados");
       setModalDia(false);
@@ -255,14 +326,16 @@ export default function FichajesPage() {
   }
 
   async function handleEliminarDelDia(id: number) {
-    await authFetch(`${API}/fichajes/${id}?hotel_id=${HOTEL_ID}`, { method: "DELETE" });
-    setFichajesDia(prev => prev.filter(f => f.id !== id));
+    await authFetch(`${API}/fichajes/${id}?hotel_id=${HOTEL_ID}`, {
+      method: "DELETE",
+    });
+    setFichajesDia((prev) => prev.filter((f) => f.id !== id));
     toast.success("Fichaje eliminado");
     fetchFichajesMes();
   }
 
   const fichajesPorFecha: Record<string, Fichaje[]> = {};
-  fichajesMes.forEach(f => {
+  fichajesMes.forEach((f) => {
     if (!fichajesPorFecha[f.fecha]) fichajesPorFecha[f.fecha] = [];
     fichajesPorFecha[f.fecha].push(f);
   });
@@ -270,11 +343,17 @@ export default function FichajesPage() {
   const diasTrabajados = Object.keys(fichajesPorFecha).sort();
 
   const totalMinsMes = diasTrabajados.reduce((sum, fecha) => {
-    return sum + fichajesPorFecha[fecha].reduce((s, f) => s + calcMins(f.hora_entrada, f.hora_salida), 0);
+    return (
+      sum +
+      fichajesPorFecha[fecha].reduce(
+        (s, f) => s + calcMins(f.hora_entrada, f.hora_salida),
+        0,
+      )
+    );
   }, 0);
 
-  const idsConFichaje = new Set(fichajes.map(f => f.user_id));
-  const sinFichaje = empleados.filter(e => !idsConFichaje.has(e.id));
+  const idsConFichaje = new Set(fichajes.map((f) => f.user_id));
+  const sinFichaje = empleados.filter((e) => !idsConFichaje.has(e.id));
 
   const totalHoras = fichajes.reduce((sum, f) => {
     return sum + calcMins(f.hora_entrada, f.hora_salida);
@@ -282,6 +361,24 @@ export default function FichajesPage() {
 
   const anios = Array.from({ length: 3 }, (_, i) => hoy.getFullYear() - 1 + i);
 
+  async function handleMarcarFalto(userId: number) {
+  try {
+    const fechaStr = format(fecha, "yyyy-MM-dd");
+    await authFetch(`${API}/ausencias?hotel_id=${HOTEL_ID}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: userId,
+        fecha: fechaStr,
+      }),
+    });
+    toast.success("Ausencia registrada");
+    fetchData();
+  } catch (e: any) {
+    const msg = await e?.response?.json?.().catch?.(() => null);
+    toast.error(msg?.detail || "Error al registrar ausencia");
+  }
+}
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -294,13 +391,21 @@ export default function FichajesPage() {
         <div className="flex gap-2">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="w-[180px] justify-start text-left font-normal">
+              <Button
+                variant="outline"
+                className="w-[180px] justify-start text-left font-normal"
+              >
                 <CalendarIcon className="mr-2 size-4" />
                 {format(fecha, "dd/MM/yyyy")}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="end">
-              <Calendar mode="single" selected={fecha} onSelect={d => d && setFecha(d)} initialFocus />
+              <Calendar
+                mode="single"
+                selected={fecha}
+                onSelect={(d) => d && setFecha(d)}
+                initialFocus
+              />
             </PopoverContent>
           </Popover>
           <Button onClick={() => abrirNuevo()} className="gap-2">
@@ -312,32 +417,54 @@ export default function FichajesPage() {
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Con fichaje</CardTitle></CardHeader>
-          <CardContent><div className="text-3xl font-bold">{new Set(fichajes.map(f => f.user_id)).size}</div></CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Sin fichaje</CardTitle></CardHeader>
-          <CardContent><div className="text-3xl font-bold text-destructive">{sinFichaje.length}</div></CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Total horas</CardTitle></CardHeader>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Con fichaje</CardTitle>
+          </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {totalHoras > 0 ? `${Math.floor(totalHoras / 60)}h ${totalHoras % 60}m` : "—"}
+              {new Set(fichajes.map((f) => f.user_id)).size}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Sin fichaje</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-destructive">
+              {sinFichaje.length}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Total horas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">
+              {totalHoras > 0
+                ? `${Math.floor(totalHoras / 60)}h ${totalHoras % 60}m`
+                : "—"}
             </div>
           </CardContent>
         </Card>
       </div>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">Registro del día</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="text-base">Registro del día</CardTitle>
+        </CardHeader>
         <CardContent>
           {loading ? (
             <div className="flex flex-col gap-2">
-              {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
             </div>
           ) : fichajes.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">No hay fichajes cargados para este día</p>
+            <p className="text-sm text-muted-foreground text-center py-8">
+              No hay fichajes cargados para este día
+            </p>
           ) : (
             <Table>
               <TableHeader>
@@ -352,30 +479,58 @@ export default function FichajesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {fichajes.map(f => (
+                {fichajes.map((f) => (
                   <TableRow key={f.id}>
                     <TableCell className="font-medium">{f.name}</TableCell>
                     <TableCell>
-                      {f.categoria ? <Badge variant="outline" className="capitalize">{f.categoria}</Badge> : "—"}
+                      {f.categoria ? (
+                        <Badge variant="outline" className="capitalize">
+                          {f.categoria}
+                        </Badge>
+                      ) : (
+                        "—"
+                      )}
                     </TableCell>
                     <TableCell>
-                      {f.hora_entrada
-                        ? <span className="flex items-center gap-1"><Clock className="size-3 text-green-500" />{f.hora_entrada.slice(0, 5)}</span>
-                        : <span className="text-muted-foreground">—</span>}
+                      {f.hora_entrada ? (
+                        <span className="flex items-center gap-1">
+                          <Clock className="size-3 text-green-500" />
+                          {f.hora_entrada.slice(0, 5)}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     <TableCell>
-                      {f.hora_salida
-                        ? <span className="flex items-center gap-1"><Clock className="size-3 text-red-500" />{f.hora_salida.slice(0, 5)}</span>
-                        : <span className="text-muted-foreground">—</span>}
+                      {f.hora_salida ? (
+                        <span className="flex items-center gap-1">
+                          <Clock className="size-3 text-red-500" />
+                          {f.hora_salida.slice(0, 5)}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </TableCell>
-                    <TableCell className="font-semibold">{calcHoras(f.hora_entrada, f.hora_salida)}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{f.notas || "—"}</TableCell>
+                    <TableCell className="font-semibold">
+                      {calcHoras(f.hora_entrada, f.hora_salida)}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {f.notas || "—"}
+                    </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => abrirEditar(f)}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => abrirEditar(f)}
+                        >
                           <Pencil className="size-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleEliminar(f.id)}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEliminar(f.id)}
+                        >
                           <Trash2 className="size-4 text-destructive" />
                         </Button>
                       </div>
@@ -391,16 +546,35 @@ export default function FichajesPage() {
       {sinFichaje.length > 0 && (
         <Card style={{ borderColor: "#fecaca" }}>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base text-destructive">Sin fichaje hoy</CardTitle>
+            <CardTitle className="text-base text-destructive">
+              Sin fichaje hoy
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
-              {sinFichaje.map(e => (
-                <Badge key={e.id} variant="outline" className="gap-1 cursor-pointer hover:bg-muted"
-                  onClick={() => abrirNuevo(e.id.toString())}>
-                  {e.name}
-                  {e.categoria && <span className="text-muted-foreground capitalize">· {e.categoria}</span>}
-                </Badge>
+              {sinFichaje.map((e) => (
+                <div key={e.id} className="flex items-center gap-1">
+                  <Badge
+                    variant="outline"
+                    className="gap-1 cursor-pointer hover:bg-muted"
+                    onClick={() => abrirNuevo(e.id.toString())}
+                  >
+                    {e.name}
+                    {e.categoria && (
+                      <span className="text-muted-foreground capitalize">
+                        · {e.categoria}
+                      </span>
+                    )}
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs text-destructive hover:text-destructive"
+                    onClick={() => handleMarcarFalto(e.id)}
+                  >
+                    Faltó
+                  </Button>
+                </div>
               ))}
             </div>
           </CardContent>
@@ -418,37 +592,62 @@ export default function FichajesPage() {
         <CardContent>
           <div className="flex flex-col gap-4">
             <div className="flex gap-2 flex-wrap">
-              <Select value={empleadoSeleccionado} onValueChange={setEmpleadoSeleccionado}>
+              <Select
+                value={empleadoSeleccionado}
+                onValueChange={setEmpleadoSeleccionado}
+              >
                 <SelectTrigger className="w-[220px]">
                   <SelectValue placeholder="Seleccioná un empleado..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {empleados.map(e => (
+                  {empleados.map((e) => (
                     <SelectItem key={e.id} value={e.id.toString()}>
                       {e.name} {e.categoria && `(${e.categoria})`}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={mesSel.toString()} onValueChange={v => setMesSel(parseInt(v))}>
-                <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+              <Select
+                value={mesSel.toString()}
+                onValueChange={(v) => setMesSel(parseInt(v))}
+              >
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  {MESES.map((m, i) => <SelectItem key={i} value={i.toString()}>{m}</SelectItem>)}
+                  {MESES.map((m, i) => (
+                    <SelectItem key={i} value={i.toString()}>
+                      {m}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-              <Select value={anioSel.toString()} onValueChange={v => setAnioSel(parseInt(v))}>
-                <SelectTrigger className="w-[90px]"><SelectValue /></SelectTrigger>
+              <Select
+                value={anioSel.toString()}
+                onValueChange={(v) => setAnioSel(parseInt(v))}
+              >
+                <SelectTrigger className="w-[90px]">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  {anios.map(a => <SelectItem key={a} value={a.toString()}>{a}</SelectItem>)}
+                  {anios.map((a) => (
+                    <SelectItem key={a} value={a.toString()}>
+                      {a}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
             {!empleadoSeleccionado ? (
-              <p className="text-sm text-muted-foreground text-center py-6">Seleccioná un empleado para ver su historial</p>
+              <p className="text-sm text-muted-foreground text-center py-6">
+                Seleccioná un empleado para ver su historial
+              </p>
             ) : loadingMes ? (
               <div className="flex flex-col gap-2">
-                {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-10 w-full" />
+                ))}
               </div>
             ) : diasTrabajados.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-6">
@@ -460,7 +659,9 @@ export default function FichajesPage() {
                   <p className="text-sm text-muted-foreground">
                     {diasTrabajados.length} días trabajados en {MESES[mesSel]}
                   </p>
-                  <p className="text-sm font-semibold">Total: {formatMins(totalMinsMes)}</p>
+                  <p className="text-sm font-semibold">
+                    Total: {formatMins(totalMinsMes)}
+                  </p>
                 </div>
                 <Table>
                   <TableHeader>
@@ -472,27 +673,48 @@ export default function FichajesPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {diasTrabajados.map(fechaStr => {
+                    {diasTrabajados.map((fechaStr) => {
                       const turnosDia = fichajesPorFecha[fechaStr];
-                      const minsDia = turnosDia.reduce((s, f) => s + calcMins(f.hora_entrada, f.hora_salida), 0);
+                      const minsDia = turnosDia.reduce(
+                        (s, f) => s + calcMins(f.hora_entrada, f.hora_salida),
+                        0,
+                      );
                       return (
                         <TableRow key={fechaStr}>
                           <TableCell className="font-medium">
-                            {format(new Date(fechaStr + "T12:00:00"), "dd/MM/yyyy", { locale: es })}
+                            {format(
+                              new Date(fechaStr + "T12:00:00"),
+                              "dd/MM/yyyy",
+                              { locale: es },
+                            )}
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-col gap-1">
-                              {turnosDia.map(t => (
-                                <span key={t.id} className="text-xs text-muted-foreground">
-                                  {t.hora_entrada?.slice(0, 5) || "—"} → {t.hora_salida?.slice(0, 5) || "—"}
-                                  {t.notas && <span className="ml-1 italic">({t.notas})</span>}
+                              {turnosDia.map((t) => (
+                                <span
+                                  key={t.id}
+                                  className="text-xs text-muted-foreground"
+                                >
+                                  {t.hora_entrada?.slice(0, 5) || "—"} →{" "}
+                                  {t.hora_salida?.slice(0, 5) || "—"}
+                                  {t.notas && (
+                                    <span className="ml-1 italic">
+                                      ({t.notas})
+                                    </span>
+                                  )}
                                 </span>
                               ))}
                             </div>
                           </TableCell>
-                          <TableCell className="font-semibold">{formatMins(minsDia)}</TableCell>
+                          <TableCell className="font-semibold">
+                            {formatMins(minsDia)}
+                          </TableCell>
                           <TableCell>
-                            <Button variant="ghost" size="sm" onClick={() => abrirDia(fechaStr, turnosDia)}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => abrirDia(fechaStr, turnosDia)}
+                            >
                               <Pencil className="size-4" />
                             </Button>
                           </TableCell>
@@ -512,7 +734,9 @@ export default function FichajesPage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {editando ? `Editar fichaje — ${editando.name}` : "Cargar fichaje"}
+              {editando
+                ? `Editar fichaje — ${editando.name}`
+                : "Cargar fichaje"}
             </DialogTitle>
           </DialogHeader>
           {editando ? (
@@ -520,30 +744,55 @@ export default function FichajesPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
                   <Label>Hora entrada</Label>
-                  <Input type="time" value={formEditar.hora_entrada}
-                    onChange={e => setFormEditar(f => ({ ...f, hora_entrada: e.target.value }))} />
+                  <Input
+                    type="time"
+                    value={formEditar.hora_entrada}
+                    onChange={(e) =>
+                      setFormEditar((f) => ({
+                        ...f,
+                        hora_entrada: e.target.value,
+                      }))
+                    }
+                  />
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label>Hora salida</Label>
-                  <Input type="time" value={formEditar.hora_salida}
-                    onChange={e => setFormEditar(f => ({ ...f, hora_salida: e.target.value }))} />
+                  <Input
+                    type="time"
+                    value={formEditar.hora_salida}
+                    onChange={(e) =>
+                      setFormEditar((f) => ({
+                        ...f,
+                        hora_salida: e.target.value,
+                      }))
+                    }
+                  />
                 </div>
               </div>
               <div className="flex flex-col gap-2">
                 <Label>Notas</Label>
-                <Input value={formEditar.notas}
-                  onChange={e => setFormEditar(f => ({ ...f, notas: e.target.value }))}
-                  placeholder="Observaciones..." />
+                <Input
+                  value={formEditar.notas}
+                  onChange={(e) =>
+                    setFormEditar((f) => ({ ...f, notas: e.target.value }))
+                  }
+                  placeholder="Observaciones..."
+                />
               </div>
             </div>
           ) : (
             <div className="flex flex-col gap-4 py-2">
               <div className="flex flex-col gap-2">
                 <Label>Empleado *</Label>
-                <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                  <SelectTrigger><SelectValue placeholder="Seleccioná..." /></SelectTrigger>
+                <Select
+                  value={selectedUserId}
+                  onValueChange={setSelectedUserId}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccioná..." />
+                  </SelectTrigger>
                   <SelectContent>
-                    {empleados.map(e => (
+                    {empleados.map((e) => (
                       <SelectItem key={e.id} value={e.id.toString()}>
                         {e.name} {e.categoria && `(${e.categoria})`}
                       </SelectItem>
@@ -556,9 +805,15 @@ export default function FichajesPage() {
                 {turnos.map((turno, idx) => (
                   <div key={idx} className="flex flex-col gap-2">
                     <div className="flex items-center justify-between">
-                      <p className="text-xs text-muted-foreground font-medium">Turno {idx + 1}</p>
+                      <p className="text-xs text-muted-foreground font-medium">
+                        Turno {idx + 1}
+                      </p>
                       {idx > 0 && (
-                        <Button variant="ghost" size="sm" onClick={() => eliminarTurno(idx)}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => eliminarTurno(idx)}
+                        >
                           <Trash2 className="size-3 text-destructive" />
                         </Button>
                       )}
@@ -566,28 +821,51 @@ export default function FichajesPage() {
                     <div className="grid grid-cols-2 gap-3">
                       <div className="flex flex-col gap-1">
                         <Label className="text-xs">Entrada</Label>
-                        <Input type="time" value={turno.hora_entrada}
-                          onChange={e => updateTurno(idx, "hora_entrada", e.target.value)} />
+                        <Input
+                          type="time"
+                          value={turno.hora_entrada}
+                          onChange={(e) =>
+                            updateTurno(idx, "hora_entrada", e.target.value)
+                          }
+                        />
                       </div>
                       <div className="flex flex-col gap-1">
                         <Label className="text-xs">Salida</Label>
-                        <Input type="time" value={turno.hora_salida}
-                          onChange={e => updateTurno(idx, "hora_salida", e.target.value)} />
+                        <Input
+                          type="time"
+                          value={turno.hora_salida}
+                          onChange={(e) =>
+                            updateTurno(idx, "hora_salida", e.target.value)
+                          }
+                        />
                       </div>
                     </div>
-                    <Input value={turno.notas} onChange={e => updateTurno(idx, "notas", e.target.value)}
-                      placeholder="Notas del turno (opcional)" className="text-sm" />
+                    <Input
+                      value={turno.notas}
+                      onChange={(e) =>
+                        updateTurno(idx, "notas", e.target.value)
+                      }
+                      placeholder="Notas del turno (opcional)"
+                      className="text-sm"
+                    />
                   </div>
                 ))}
               </div>
-              <Button variant="outline" size="sm" onClick={agregarTurno} className="gap-2 w-full">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={agregarTurno}
+                className="gap-2 w-full"
+              >
                 <Plus className="size-3" />
                 Añadir turno
               </Button>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setModalOpen(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setModalOpen(false)}>
+              Cancelar
+            </Button>
             <Button onClick={handleGuardar} disabled={guardando}>
               {guardando ? "Guardando..." : "Guardar"}
             </Button>
@@ -600,41 +878,72 @@ export default function FichajesPage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
-              Editar turnos — {fechaDia ? format(new Date(fechaDia + "T12:00:00"), "dd/MM/yyyy", { locale: es }) : ""}
+              Editar turnos —{" "}
+              {fechaDia
+                ? format(new Date(fechaDia + "T12:00:00"), "dd/MM/yyyy", {
+                    locale: es,
+                  })
+                : ""}
             </DialogTitle>
           </DialogHeader>
           <div className="flex flex-col gap-3 py-2 max-h-[400px] overflow-y-auto">
             {fichajesDia.map((f, idx) => (
               <div key={f.id} className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground font-medium">Turno {idx + 1}</p>
-                  <Button variant="ghost" size="sm" onClick={() => handleEliminarDelDia(f.id)}>
+                  <p className="text-xs text-muted-foreground font-medium">
+                    Turno {idx + 1}
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEliminarDelDia(f.id)}
+                  >
                     <Trash2 className="size-3 text-destructive" />
                   </Button>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1">
                     <Label className="text-xs">Entrada</Label>
-                    <Input type="time"
+                    <Input
+                      type="time"
                       value={f.hora_entrada?.slice(0, 5) || ""}
-                      onChange={e => setFichajesDia(prev => prev.map((fi, i) =>
-                        i === idx ? { ...fi, hora_entrada: e.target.value } : fi
-                      ))} />
+                      onChange={(e) =>
+                        setFichajesDia((prev) =>
+                          prev.map((fi, i) =>
+                            i === idx
+                              ? { ...fi, hora_entrada: e.target.value }
+                              : fi,
+                          ),
+                        )
+                      }
+                    />
                   </div>
                   <div className="flex flex-col gap-1">
                     <Label className="text-xs">Salida</Label>
-                    <Input type="time"
+                    <Input
+                      type="time"
                       value={f.hora_salida?.slice(0, 5) || ""}
-                      onChange={e => setFichajesDia(prev => prev.map((fi, i) =>
-                        i === idx ? { ...fi, hora_salida: e.target.value } : fi
-                      ))} />
+                      onChange={(e) =>
+                        setFichajesDia((prev) =>
+                          prev.map((fi, i) =>
+                            i === idx
+                              ? { ...fi, hora_salida: e.target.value }
+                              : fi,
+                          ),
+                        )
+                      }
+                    />
                   </div>
                 </div>
                 <Input
                   value={f.notas || ""}
-                  onChange={e => setFichajesDia(prev => prev.map((fi, i) =>
-                    i === idx ? { ...fi, notas: e.target.value } : fi
-                  ))}
+                  onChange={(e) =>
+                    setFichajesDia((prev) =>
+                      prev.map((fi, i) =>
+                        i === idx ? { ...fi, notas: e.target.value } : fi,
+                      ),
+                    )
+                  }
                   placeholder="Notas del turno (opcional)"
                   className="text-sm"
                 />
@@ -643,7 +952,9 @@ export default function FichajesPage() {
             ))}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setModalDia(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setModalDia(false)}>
+              Cancelar
+            </Button>
             <Button onClick={handleGuardarDia} disabled={guardandoDia}>
               {guardandoDia ? "Guardando..." : "Guardar cambios"}
             </Button>
