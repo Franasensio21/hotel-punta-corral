@@ -28,8 +28,8 @@ def update_railway_env(new_token_json: str):
         return
     try:
         query = """
-        mutation($serviceId: String!, $environmentId: String!, $input: [VariableUpsertInput!]!) {
-            variableCollectionUpsert(serviceId: $serviceId, environmentId: $environmentId, variables: $input)
+        mutation($input: VariableCollectionUpsertInput!) {
+            variableCollectionUpsert(input: $input)
         }
         """
         resp = requests.post(
@@ -38,14 +38,16 @@ def update_railway_env(new_token_json: str):
             json={
                 "query": query,
                 "variables": {
-                    "serviceId": RAILWAY_SERVICE_ID,
-                    "environmentId": RAILWAY_ENV_ID,
-                    "input": [{"name": "GMAIL_TOKEN_JSON", "value": new_token_json}]
+                    "input": {
+                        "serviceId": RAILWAY_SERVICE_ID,
+                        "environmentId": RAILWAY_ENV_ID,
+                        "variables": {"GMAIL_TOKEN_JSON": new_token_json}
+                    }
                 }
             },
             timeout=10
         )
-        if resp.ok:
+        if resp.ok and not resp.json().get("errors"):
             print("  [auth] Token de Gmail actualizado en Railway")
         else:
             print(f"  [auth] Error actualizando Railway: {resp.text}")
