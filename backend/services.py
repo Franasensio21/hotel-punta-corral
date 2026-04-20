@@ -14,11 +14,8 @@ TYPE_SHORT = {
 
 
 def get_availability(db: Session, hotel_id: int, fecha: date) -> list[dict]:
-    """
-    Devuelve todas las habitaciones del hotel con su estado para una fecha.
-    Una habitación está ocupada si tiene una reserva confirmed/pending
-    cuyo check_in <= fecha < check_out.
-    """
+    from sqlalchemy import text
+
     rooms = (
         db.query(models.Room)
         .filter(models.Room.hotel_id == hotel_id, models.Room.active == True)
@@ -26,7 +23,6 @@ def get_availability(db: Session, hotel_id: int, fecha: date) -> list[dict]:
         .all()
     )
 
-    # Traemos todas las reservas activas que cubren esa fecha en una sola query
     active_res = (
         db.query(models.Reservation)
         .filter(
@@ -38,22 +34,39 @@ def get_availability(db: Session, hotel_id: int, fecha: date) -> list[dict]:
         .all()
     )
 
-    # Indexamos por room_id para lookup O(1)
+    # Traer overrides vigentes para esa fecha
+    overrides_raw = db.execute(text("""
+        SELECT room_id, tipo_override, subtipo_override, capacidad_override
+        FROM habitaciones_override
+        WHERE hotel_id = :hotel_id
+          AND fecha_desde <= :fecha
+          AND fecha_hasta >= :fecha
+    """), {"hotel_id": hotel_id, "fecha": fecha}).fetchall()
+
+    overrides_by_room = {o.room_id: o for o in overrides_raw}
+
     res_by_room = {r.room_id: r for r in active_res}
 
     result = []
     for room in rooms:
         res = res_by_room.get(room.id)
+        ov  = overrides_by_room.get(room.id)
+
+        # Aplicar override si existe
+        tipo      = ov.tipo_override     if ov and ov.tipo_override     else room.type
+        subtipo   = ov.subtipo_override  if ov and ov.subtipo_override  else room.subtipo
+        capacidad = ov.capacidad_override if ov and ov.capacidad_override else room.capacity
+
         result.append({
-            "room_id":   room.id,
-            "numero":    room.number,
-            "tipo":      room.type,
-            "subtipo":   room.subtipo,
-            "capacidad": room.capacity,
-            "estado":    "ocupada" if res else "libre",
-            "origen":    res.channel.slug  if res and res.channel else None,
-            "huesped":   res.guest.name    if res and res.guest   else None,
-            "grupo":     res.group.name    if res and res.group   else None,
+            "room_id":        room.id,
+            "numero":         room.number,
+            "tipo":           tipo,
+            "subtipo":        subtipo,
+            "capacidad":      capacidad,
+            "estado":         "ocupada" if res else "libre",
+            "origen":         res.channel.slug if res and res.channel else None,
+            "huesped":        res.guest.name   if res and res.guest   else None,
+            "grupo":          res.group.name   if res and res.group   else None,
             "tipo_ocupacion": res.tipo_ocupacion if res and res.tipo_ocupacion else "individual",
         })
 
@@ -61,11 +74,9 @@ def get_availability(db: Session, hotel_id: int, fecha: date) -> list[dict]:
 
 
 def get_available_rooms(db: Session, hotel_id: int,
-                        check_in: date, check_out: date) -> list[models.Room]:
-    """
-    Habitaciones libres en un rango de fechas.
-    Excluye las que tienen solapamiento con reservas activas.
-    """
+                        check_in: date, check_out: date) -> list[dict]:
+    from sqlalchemy import text
+
     occupied_ids = (
         db.query(models.Reservation.room_id)
         .filter(
@@ -77,7 +88,7 @@ def get_available_rooms(db: Session, hotel_id: int,
         .subquery()
     )
 
-    return (
+    rooms = (
         db.query(models.Room)
         .filter(
             models.Room.hotel_id == hotel_id,
@@ -87,6 +98,30 @@ def get_available_rooms(db: Session, hotel_id: int,
         .order_by(models.Room.number)
         .all()
     )
+
+    # Traer overrides que se superpongan con el rango
+    overrides_raw = db.execute(text("""
+        SELECT room_id, tipo_override, subtipo_override, capacidad_override
+        FROM habitaciones_override
+        WHERE hotel_id = :hotel_id
+            AND fecha_desde <= :check_out
+            AND fecha_hasta >= :check_in
+    """), {"hotel_id": hotel_id, "check_in": check_in, "check_out": check_out}).fetchall()
+
+    overrides_by_room = {o.room_id: o for o in overrides_raw}
+
+    result = []
+    for room in rooms:
+        ov = overrides_by_room.get(room.id)
+        result.append({
+            "id":       room.id,
+            "number":   room.number,
+            "type":     ov.tipo_override      if ov and ov.tipo_override      else room.type,
+            "subtipo":  ov.subtipo_override   if ov and ov.subtipo_override   else room.subtipo,
+            "capacity": ov.capacidad_override if ov and ov.capacidad_override else room.capacity,
+        })
+
+    return result
 
 
 def create_reservation(db: Session, hotel_id: int,

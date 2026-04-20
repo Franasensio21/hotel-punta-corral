@@ -115,25 +115,21 @@ def get_disponibilidad_rango(
     hotel_id:  int  = Query(settings.DEFAULT_HOTEL_ID),
     db:        Session = Depends(get_db),
 ):
-    """
-    Habitaciones completamente libres entre dos fechas.
-    Útil para mostrar qué se puede reservar al crear una reserva.
-    """
     if check_out <= check_in:
         raise HTTPException(status_code=400, detail="check_out debe ser posterior a check_in")
 
     rooms = services.get_available_rooms(db, hotel_id, check_in, check_out)
 
     if tipo:
-        rooms = [r for r in rooms if r.type == tipo]
+        rooms = [r for r in rooms if r["type"] == tipo]
 
     return {
-        "check_in":   str(check_in),
-        "check_out":  str(check_out),
-        "hotel_id":   hotel_id,
+        "check_in":    str(check_in),
+        "check_out":   str(check_out),
+        "hotel_id":    hotel_id,
         "disponibles": len(rooms),
         "habitaciones": [
-            {"id": r.id, "numero": r.number, "tipo": r.type, "capacidad": r.capacity}
+            {"id": r["id"], "numero": r["number"], "tipo": r["type"], "capacidad": r["capacity"]}
             for r in rooms
         ],
     }
