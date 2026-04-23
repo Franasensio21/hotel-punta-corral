@@ -21,6 +21,7 @@ const LEYENDA = [
   { color: "#fb923c", label: "Directa" },
   { color: "#a855f7", label: "Gmail"   },
   { color: "#facc15", label: "Grupo"   },
+  { color: "#e206ba", labe: "Expedia"  },
   { color: "#9ca3af", label: "Otro"    },
 ]
 

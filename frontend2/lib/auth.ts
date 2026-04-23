@@ -70,6 +70,7 @@ export function isAuthenticated(): boolean {
 export async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
   const token = typeof window !== "undefined" ? localStorage.getItem("hotel_token") : null
   const { headers: extraHeaders, ...restOptions } = options
+  
   const response = await fetch(url, {
     ...restOptions,
     headers: {
@@ -79,10 +80,23 @@ export async function authFetch(url: string, options: RequestInit = {}): Promise
     },
   })
 
+  // 1. Manejo de Sesión Expirada
   if (response.status === 401) {
     localStorage.removeItem("hotel_token")
     localStorage.removeItem("hotel_user")
-    window.location.href = "/login"
+    if (typeof window !== "undefined") window.location.href = "/login"
+    return response // Retornamos para evitar seguir
+  }
+
+  // 2. AGREGÁ ESTO: Manejo de errores generales (400, 500, etc.)
+  if (!response.ok) {
+    // Intentamos sacar el mensaje de error del backend si existe
+    const errorBody = await response.json().catch(() => ({}));
+    const mensaje = errorBody.detail || `Error del servidor (${response.status})`;
+    
+    // Al lanzar este error, el 'catch' en tu página de Configuración 
+    // finalmente atrapará el problema y mostrará el toast.error()
+    throw new Error(mensaje);
   }
 
   return response

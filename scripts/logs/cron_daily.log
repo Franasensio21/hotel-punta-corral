@@ -2910,3 +2910,1765 @@ connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection re
 2026-03-20 03:00:03,229 [INFO] ========================================
 2026-03-20 03:00:03,229 [INFO] Cron diario finalizado
 2026-03-20 03:00:03,229 [INFO] ========================================
+2026-03-21 03:00:03,185 [INFO] ========================================
+2026-03-21 03:00:03,186 [INFO] Cron diario iniciado: 2026-03-21 03:00:03.186596
+2026-03-21 03:00:03,186 [INFO] ========================================
+2026-03-21 03:00:03,186 [INFO] --- Iniciando: Extender disponibilidad futura ---
+2026-03-21 03:00:05,799 [INFO] --- Completado: Extender disponibilidad futura ---
+2026-03-21 03:00:05,824 [INFO] --- Iniciando: Regenerar JSON semanal ---
+2026-03-21 03:00:05,824 [INFO] No es lunes — se omite regeneración completa.
+2026-03-21 03:00:05,824 [INFO] --- Completado: Regenerar JSON semanal ---
+2026-03-21 03:00:05,824 [INFO] ========================================
+2026-03-21 03:00:05,825 [INFO] Cron diario finalizado
+2026-03-21 03:00:05,825 [INFO] ========================================
+2026-03-22 03:00:02,551 [INFO] ========================================
+2026-03-22 03:00:02,552 [INFO] Cron diario iniciado: 2026-03-22 03:00:02.552158
+2026-03-22 03:00:02,552 [INFO] ========================================
+2026-03-22 03:00:02,552 [INFO] --- Iniciando: Extender disponibilidad futura ---
+2026-03-22 03:00:08,726 [ERROR] --- ERROR en Extender disponibilidad futura: (psycopg2.OperationalError) connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8) ---
+Traceback (most recent call last):
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\psycopg2\__init__.py", line 135, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+psycopg2.OperationalError: connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\franc\hotel-system\scripts\cron_daily.py", line 37, in step
+    fn()
+    ~~^^
+  File "C:\Users\franc\hotel-system\scripts\cron_daily.py", line 45, in tarea_extender_disponibilidad
+    main()
+    ~~~~^^
+  File "C:\Users\franc\hotel-system\scripts\extend_availability.py", line 70, in main
+    rooms_data = get_availability(db, hotel_id, fecha)
+  File "C:\Users\franc\hotel-system\backend\services.py", line 26, in get_availability
+    .all()
+     ~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2704, in all
+    return self._iter().all()  # type: ignore
+           ~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2857, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2239, in _execute_internal
+    conn = self._connection_for_bind(bind)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2108, in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in _connection_for_bind
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\state_changes.py", line 137, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 1187, in _connection_for_bind
+    conn = bind.connect()
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3293, in connect
+    return self._connection_cls(self)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 145, in __init__
+    Connection._handle_dbapi_exception_noconnection(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        err, dialect, engine
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2448, in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\psycopg2\__init__.py", line 135, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-03-22 03:00:10,122 [INFO] --- Iniciando: Regenerar JSON semanal ---
+2026-03-22 03:00:10,124 [INFO] No es lunes — se omite regeneración completa.
+2026-03-22 03:00:10,126 [INFO] --- Completado: Regenerar JSON semanal ---
+2026-03-22 03:00:10,126 [INFO] ========================================
+2026-03-22 03:00:10,126 [INFO] Cron diario finalizado
+2026-03-22 03:00:10,126 [INFO] ========================================
+2026-03-24 03:00:02,436 [INFO] ========================================
+2026-03-24 03:00:02,437 [INFO] Cron diario iniciado: 2026-03-24 03:00:02.437364
+2026-03-24 03:00:02,437 [INFO] ========================================
+2026-03-24 03:00:02,437 [INFO] --- Iniciando: Extender disponibilidad futura ---
+2026-03-24 03:00:08,273 [ERROR] --- ERROR en Extender disponibilidad futura: (psycopg2.OperationalError) connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8) ---
+Traceback (most recent call last):
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\psycopg2\__init__.py", line 135, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+psycopg2.OperationalError: connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\franc\hotel-system\scripts\cron_daily.py", line 37, in step
+    fn()
+    ~~^^
+  File "C:\Users\franc\hotel-system\scripts\cron_daily.py", line 45, in tarea_extender_disponibilidad
+    main()
+    ~~~~^^
+  File "C:\Users\franc\hotel-system\scripts\extend_availability.py", line 70, in main
+    rooms_data = get_availability(db, hotel_id, fecha)
+  File "C:\Users\franc\hotel-system\backend\services.py", line 26, in get_availability
+    .all()
+     ~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2704, in all
+    return self._iter().all()  # type: ignore
+           ~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2857, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2239, in _execute_internal
+    conn = self._connection_for_bind(bind)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2108, in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in _connection_for_bind
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\state_changes.py", line 137, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 1187, in _connection_for_bind
+    conn = bind.connect()
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3293, in connect
+    return self._connection_cls(self)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 145, in __init__
+    Connection._handle_dbapi_exception_noconnection(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        err, dialect, engine
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2448, in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\psycopg2\__init__.py", line 135, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-03-24 03:00:08,471 [INFO] --- Iniciando: Regenerar JSON semanal ---
+2026-03-24 03:00:08,471 [INFO] No es lunes — se omite regeneración completa.
+2026-03-24 03:00:08,492 [INFO] --- Completado: Regenerar JSON semanal ---
+2026-03-24 03:00:08,492 [INFO] ========================================
+2026-03-24 03:00:08,492 [INFO] Cron diario finalizado
+2026-03-24 03:00:08,492 [INFO] ========================================
+2026-03-25 03:00:01,826 [INFO] ========================================
+2026-03-25 03:00:01,826 [INFO] Cron diario iniciado: 2026-03-25 03:00:01.826951
+2026-03-25 03:00:01,827 [INFO] ========================================
+2026-03-25 03:00:01,827 [INFO] --- Iniciando: Extender disponibilidad futura ---
+2026-03-25 03:00:04,760 [ERROR] --- ERROR en Extender disponibilidad futura: (psycopg2.errors.UndefinedColumn) column reservations.precio_total does not exist
+LINE 1: ...ns.tipo_ocupacion AS reservations_tipo_ocupacion, reservatio...
+                                                             ^
+
+[SQL: SELECT reservations.id AS reservations_id, reservations.hotel_id AS reservations_hotel_id, reservations.room_id AS reservations_room_id, reservations.guest_id AS reservations_guest_id, reservations.channel_id AS reservations_channel_id, reservations.group_id AS reservations_group_id, reservations.check_in AS reservations_check_in, reservations.check_out AS reservations_check_out, reservations.status AS reservations_status, reservations.notes AS reservations_notes, reservations.created_at AS reservations_created_at, reservations.updated_at AS reservations_updated_at, reservations.tipo_ocupacion AS reservations_tipo_ocupacion, reservations.precio_total AS reservations_precio_total, reservations.sena AS reservations_sena 
+FROM reservations 
+WHERE reservations.hotel_id = %(hotel_id_1)s AND reservations.status IN (%(status_1_1)s, %(status_1_2)s) AND reservations.check_in <= %(check_in_1)s AND reservations.check_out > %(check_out_1)s]
+[parameters: {'hotel_id_1': 1, 'check_in_1': datetime.date(2027, 3, 22), 'check_out_1': datetime.date(2027, 3, 22), 'status_1_1': 'confirmed', 'status_1_2': 'pending'}]
+(Background on this error at: https://sqlalche.me/e/20/f405) ---
+Traceback (most recent call last):
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedColumn: column reservations.precio_total does not exist
+LINE 1: ...ns.tipo_ocupacion AS reservations_tipo_ocupacion, reservatio...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\franc\hotel-system\scripts\cron_daily.py", line 37, in step
+    fn()
+    ~~^^
+  File "C:\Users\franc\hotel-system\scripts\cron_daily.py", line 45, in tarea_extender_disponibilidad
+    main()
+    ~~~~^^
+  File "C:\Users\franc\hotel-system\scripts\extend_availability.py", line 70, in main
+    rooms_data = get_availability(db, hotel_id, fecha)
+  File "C:\Users\franc\hotel-system\backend\services.py", line 38, in get_availability
+    .all()
+     ~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2704, in all
+    return self._iter().all()  # type: ignore
+           ~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2857, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2249, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self,
+        ^^^^^
+    ...<4 lines>...
+        conn,
+        ^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+        statement, params or {}, execution_options=execution_options
+    )
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1419, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 527, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2363, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.ProgrammingError: (psycopg2.errors.UndefinedColumn) column reservations.precio_total does not exist
+LINE 1: ...ns.tipo_ocupacion AS reservations_tipo_ocupacion, reservatio...
+                                                             ^
+
+[SQL: SELECT reservations.id AS reservations_id, reservations.hotel_id AS reservations_hotel_id, reservations.room_id AS reservations_room_id, reservations.guest_id AS reservations_guest_id, reservations.channel_id AS reservations_channel_id, reservations.group_id AS reservations_group_id, reservations.check_in AS reservations_check_in, reservations.check_out AS reservations_check_out, reservations.status AS reservations_status, reservations.notes AS reservations_notes, reservations.created_at AS reservations_created_at, reservations.updated_at AS reservations_updated_at, reservations.tipo_ocupacion AS reservations_tipo_ocupacion, reservations.precio_total AS reservations_precio_total, reservations.sena AS reservations_sena 
+FROM reservations 
+WHERE reservations.hotel_id = %(hotel_id_1)s AND reservations.status IN (%(status_1_1)s, %(status_1_2)s) AND reservations.check_in <= %(check_in_1)s AND reservations.check_out > %(check_out_1)s]
+[parameters: {'hotel_id_1': 1, 'check_in_1': datetime.date(2027, 3, 22), 'check_out_1': datetime.date(2027, 3, 22), 'status_1_1': 'confirmed', 'status_1_2': 'pending'}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2026-03-25 03:00:04,820 [INFO] --- Iniciando: Regenerar JSON semanal ---
+2026-03-25 03:00:04,820 [INFO] No es lunes — se omite regeneración completa.
+2026-03-25 03:00:04,821 [INFO] --- Completado: Regenerar JSON semanal ---
+2026-03-25 03:00:04,821 [INFO] ========================================
+2026-03-25 03:00:04,821 [INFO] Cron diario finalizado
+2026-03-25 03:00:04,821 [INFO] ========================================
+2026-03-26 03:00:02,140 [INFO] ========================================
+2026-03-26 03:00:02,140 [INFO] Cron diario iniciado: 2026-03-26 03:00:02.140963
+2026-03-26 03:00:02,141 [INFO] ========================================
+2026-03-26 03:00:02,141 [INFO] --- Iniciando: Extender disponibilidad futura ---
+2026-03-26 03:00:07,796 [ERROR] --- ERROR en Extender disponibilidad futura: (psycopg2.OperationalError) connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8) ---
+Traceback (most recent call last):
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\psycopg2\__init__.py", line 135, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+psycopg2.OperationalError: connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\franc\hotel-system\scripts\cron_daily.py", line 37, in step
+    fn()
+    ~~^^
+  File "C:\Users\franc\hotel-system\scripts\cron_daily.py", line 45, in tarea_extender_disponibilidad
+    main()
+    ~~~~^^
+  File "C:\Users\franc\hotel-system\scripts\extend_availability.py", line 70, in main
+    rooms_data = get_availability(db, hotel_id, fecha)
+  File "C:\Users\franc\hotel-system\backend\services.py", line 26, in get_availability
+    .all()
+     ~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2704, in all
+    return self._iter().all()  # type: ignore
+           ~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2857, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2239, in _execute_internal
+    conn = self._connection_for_bind(bind)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2108, in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in _connection_for_bind
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\state_changes.py", line 137, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 1187, in _connection_for_bind
+    conn = bind.connect()
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3293, in connect
+    return self._connection_cls(self)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 145, in __init__
+    Connection._handle_dbapi_exception_noconnection(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        err, dialect, engine
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2448, in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\psycopg2\__init__.py", line 135, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-03-26 03:00:08,072 [INFO] --- Iniciando: Regenerar JSON semanal ---
+2026-03-26 03:00:08,072 [INFO] No es lunes — se omite regeneración completa.
+2026-03-26 03:00:08,072 [INFO] --- Completado: Regenerar JSON semanal ---
+2026-03-26 03:00:08,072 [INFO] ========================================
+2026-03-26 03:00:08,073 [INFO] Cron diario finalizado
+2026-03-26 03:00:08,073 [INFO] ========================================
+2026-03-27 03:00:02,175 [INFO] ========================================
+2026-03-27 03:00:02,176 [INFO] Cron diario iniciado: 2026-03-27 03:00:02.176473
+2026-03-27 03:00:02,176 [INFO] ========================================
+2026-03-27 03:00:02,176 [INFO] --- Iniciando: Extender disponibilidad futura ---
+2026-03-27 03:00:04,814 [ERROR] --- ERROR en Extender disponibilidad futura: (psycopg2.errors.UndefinedColumn) column reservations.precio_total does not exist
+LINE 1: ...ns.tipo_ocupacion AS reservations_tipo_ocupacion, reservatio...
+                                                             ^
+
+[SQL: SELECT reservations.id AS reservations_id, reservations.hotel_id AS reservations_hotel_id, reservations.room_id AS reservations_room_id, reservations.guest_id AS reservations_guest_id, reservations.channel_id AS reservations_channel_id, reservations.group_id AS reservations_group_id, reservations.check_in AS reservations_check_in, reservations.check_out AS reservations_check_out, reservations.status AS reservations_status, reservations.notes AS reservations_notes, reservations.created_at AS reservations_created_at, reservations.updated_at AS reservations_updated_at, reservations.tipo_ocupacion AS reservations_tipo_ocupacion, reservations.precio_total AS reservations_precio_total, reservations.sena AS reservations_sena 
+FROM reservations 
+WHERE reservations.hotel_id = %(hotel_id_1)s AND reservations.status IN (%(status_1_1)s, %(status_1_2)s) AND reservations.check_in <= %(check_in_1)s AND reservations.check_out > %(check_out_1)s]
+[parameters: {'hotel_id_1': 1, 'check_in_1': datetime.date(2027, 3, 22), 'check_out_1': datetime.date(2027, 3, 22), 'status_1_1': 'confirmed', 'status_1_2': 'pending'}]
+(Background on this error at: https://sqlalche.me/e/20/f405) ---
+Traceback (most recent call last):
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedColumn: column reservations.precio_total does not exist
+LINE 1: ...ns.tipo_ocupacion AS reservations_tipo_ocupacion, reservatio...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\franc\hotel-system\scripts\cron_daily.py", line 37, in step
+    fn()
+    ~~^^
+  File "C:\Users\franc\hotel-system\scripts\cron_daily.py", line 45, in tarea_extender_disponibilidad
+    main()
+    ~~~~^^
+  File "C:\Users\franc\hotel-system\scripts\extend_availability.py", line 70, in main
+    rooms_data = get_availability(db, hotel_id, fecha)
+  File "C:\Users\franc\hotel-system\backend\services.py", line 38, in get_availability
+    .all()
+     ~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2704, in all
+    return self._iter().all()  # type: ignore
+           ~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2857, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2249, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self,
+        ^^^^^
+    ...<4 lines>...
+        conn,
+        ^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+        statement, params or {}, execution_options=execution_options
+    )
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1419, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 527, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2363, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.ProgrammingError: (psycopg2.errors.UndefinedColumn) column reservations.precio_total does not exist
+LINE 1: ...ns.tipo_ocupacion AS reservations_tipo_ocupacion, reservatio...
+                                                             ^
+
+[SQL: SELECT reservations.id AS reservations_id, reservations.hotel_id AS reservations_hotel_id, reservations.room_id AS reservations_room_id, reservations.guest_id AS reservations_guest_id, reservations.channel_id AS reservations_channel_id, reservations.group_id AS reservations_group_id, reservations.check_in AS reservations_check_in, reservations.check_out AS reservations_check_out, reservations.status AS reservations_status, reservations.notes AS reservations_notes, reservations.created_at AS reservations_created_at, reservations.updated_at AS reservations_updated_at, reservations.tipo_ocupacion AS reservations_tipo_ocupacion, reservations.precio_total AS reservations_precio_total, reservations.sena AS reservations_sena 
+FROM reservations 
+WHERE reservations.hotel_id = %(hotel_id_1)s AND reservations.status IN (%(status_1_1)s, %(status_1_2)s) AND reservations.check_in <= %(check_in_1)s AND reservations.check_out > %(check_out_1)s]
+[parameters: {'hotel_id_1': 1, 'check_in_1': datetime.date(2027, 3, 22), 'check_out_1': datetime.date(2027, 3, 22), 'status_1_1': 'confirmed', 'status_1_2': 'pending'}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2026-03-27 03:00:04,927 [INFO] --- Iniciando: Regenerar JSON semanal ---
+2026-03-27 03:00:04,927 [INFO] No es lunes — se omite regeneración completa.
+2026-03-27 03:00:04,927 [INFO] --- Completado: Regenerar JSON semanal ---
+2026-03-27 03:00:04,928 [INFO] ========================================
+2026-03-27 03:00:04,928 [INFO] Cron diario finalizado
+2026-03-27 03:00:04,928 [INFO] ========================================
+2026-04-07 03:00:02,848 [INFO] ========================================
+2026-04-07 03:00:02,848 [INFO] Cron diario iniciado: 2026-04-07 03:00:02.848942
+2026-04-07 03:00:02,849 [INFO] ========================================
+2026-04-07 03:00:02,849 [INFO] --- Iniciando: Extender disponibilidad futura ---
+2026-04-07 03:00:06,871 [ERROR] --- ERROR en Extender disponibilidad futura: (psycopg2.errors.UndefinedColumn) column reservations.precio_total does not exist
+LINE 1: ...ns.tipo_ocupacion AS reservations_tipo_ocupacion, reservatio...
+                                                             ^
+
+[SQL: SELECT reservations.id AS reservations_id, reservations.hotel_id AS reservations_hotel_id, reservations.room_id AS reservations_room_id, reservations.guest_id AS reservations_guest_id, reservations.channel_id AS reservations_channel_id, reservations.group_id AS reservations_group_id, reservations.check_in AS reservations_check_in, reservations.check_out AS reservations_check_out, reservations.status AS reservations_status, reservations.notes AS reservations_notes, reservations.created_at AS reservations_created_at, reservations.updated_at AS reservations_updated_at, reservations.tipo_ocupacion AS reservations_tipo_ocupacion, reservations.precio_total AS reservations_precio_total, reservations.sena AS reservations_sena 
+FROM reservations 
+WHERE reservations.hotel_id = %(hotel_id_1)s AND reservations.status IN (%(status_1_1)s, %(status_1_2)s) AND reservations.check_in <= %(check_in_1)s AND reservations.check_out > %(check_out_1)s]
+[parameters: {'hotel_id_1': 1, 'check_in_1': datetime.date(2027, 3, 22), 'check_out_1': datetime.date(2027, 3, 22), 'status_1_1': 'confirmed', 'status_1_2': 'pending'}]
+(Background on this error at: https://sqlalche.me/e/20/f405) ---
+Traceback (most recent call last):
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedColumn: column reservations.precio_total does not exist
+LINE 1: ...ns.tipo_ocupacion AS reservations_tipo_ocupacion, reservatio...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\franc\hotel-system\scripts\cron_daily.py", line 37, in step
+    fn()
+    ~~^^
+  File "C:\Users\franc\hotel-system\scripts\cron_daily.py", line 45, in tarea_extender_disponibilidad
+    main()
+    ~~~~^^
+  File "C:\Users\franc\hotel-system\scripts\extend_availability.py", line 70, in main
+    rooms_data = get_availability(db, hotel_id, fecha)
+  File "C:\Users\franc\hotel-system\backend\services.py", line 38, in get_availability
+    .all()
+     ~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2704, in all
+    return self._iter().all()  # type: ignore
+           ~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2857, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2249, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self,
+        ^^^^^
+    ...<4 lines>...
+        conn,
+        ^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+        statement, params or {}, execution_options=execution_options
+    )
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1419, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 527, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2363, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.ProgrammingError: (psycopg2.errors.UndefinedColumn) column reservations.precio_total does not exist
+LINE 1: ...ns.tipo_ocupacion AS reservations_tipo_ocupacion, reservatio...
+                                                             ^
+
+[SQL: SELECT reservations.id AS reservations_id, reservations.hotel_id AS reservations_hotel_id, reservations.room_id AS reservations_room_id, reservations.guest_id AS reservations_guest_id, reservations.channel_id AS reservations_channel_id, reservations.group_id AS reservations_group_id, reservations.check_in AS reservations_check_in, reservations.check_out AS reservations_check_out, reservations.status AS reservations_status, reservations.notes AS reservations_notes, reservations.created_at AS reservations_created_at, reservations.updated_at AS reservations_updated_at, reservations.tipo_ocupacion AS reservations_tipo_ocupacion, reservations.precio_total AS reservations_precio_total, reservations.sena AS reservations_sena 
+FROM reservations 
+WHERE reservations.hotel_id = %(hotel_id_1)s AND reservations.status IN (%(status_1_1)s, %(status_1_2)s) AND reservations.check_in <= %(check_in_1)s AND reservations.check_out > %(check_out_1)s]
+[parameters: {'hotel_id_1': 1, 'check_in_1': datetime.date(2027, 3, 22), 'check_out_1': datetime.date(2027, 3, 22), 'status_1_1': 'confirmed', 'status_1_2': 'pending'}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2026-04-07 03:00:07,400 [INFO] --- Iniciando: Regenerar JSON semanal ---
+2026-04-07 03:00:07,400 [INFO] No es lunes — se omite regeneración completa.
+2026-04-07 03:00:07,429 [INFO] --- Completado: Regenerar JSON semanal ---
+2026-04-07 03:00:07,430 [INFO] ========================================
+2026-04-07 03:00:07,430 [INFO] Cron diario finalizado
+2026-04-07 03:00:07,430 [INFO] ========================================
+2026-04-08 03:00:02,533 [INFO] ========================================
+2026-04-08 03:00:02,534 [INFO] Cron diario iniciado: 2026-04-08 03:00:02.534659
+2026-04-08 03:00:02,534 [INFO] ========================================
+2026-04-08 03:00:02,534 [INFO] --- Iniciando: Extender disponibilidad futura ---
+2026-04-08 03:00:08,286 [ERROR] --- ERROR en Extender disponibilidad futura: (psycopg2.OperationalError) connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8) ---
+Traceback (most recent call last):
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\psycopg2\__init__.py", line 135, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+psycopg2.OperationalError: connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\franc\hotel-system\scripts\cron_daily.py", line 37, in step
+    fn()
+    ~~^^
+  File "C:\Users\franc\hotel-system\scripts\cron_daily.py", line 45, in tarea_extender_disponibilidad
+    main()
+    ~~~~^^
+  File "C:\Users\franc\hotel-system\scripts\extend_availability.py", line 70, in main
+    rooms_data = get_availability(db, hotel_id, fecha)
+  File "C:\Users\franc\hotel-system\backend\services.py", line 26, in get_availability
+    .all()
+     ~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2704, in all
+    return self._iter().all()  # type: ignore
+           ~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2857, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2239, in _execute_internal
+    conn = self._connection_for_bind(bind)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2108, in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in _connection_for_bind
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\state_changes.py", line 137, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 1187, in _connection_for_bind
+    conn = bind.connect()
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3293, in connect
+    return self._connection_cls(self)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 145, in __init__
+    Connection._handle_dbapi_exception_noconnection(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        err, dialect, engine
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2448, in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\psycopg2\__init__.py", line 135, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-04-08 03:00:08,499 [INFO] --- Iniciando: Regenerar JSON semanal ---
+2026-04-08 03:00:08,500 [INFO] No es lunes — se omite regeneración completa.
+2026-04-08 03:00:08,500 [INFO] --- Completado: Regenerar JSON semanal ---
+2026-04-08 03:00:08,500 [INFO] ========================================
+2026-04-08 03:00:08,500 [INFO] Cron diario finalizado
+2026-04-08 03:00:08,500 [INFO] ========================================
+2026-04-09 03:00:02,134 [INFO] ========================================
+2026-04-09 03:00:02,134 [INFO] Cron diario iniciado: 2026-04-09 03:00:02.134930
+2026-04-09 03:00:02,135 [INFO] ========================================
+2026-04-09 03:00:02,135 [INFO] --- Iniciando: Extender disponibilidad futura ---
+2026-04-10 03:00:02,167 [INFO] ========================================
+2026-04-10 03:00:02,169 [INFO] Cron diario iniciado: 2026-04-10 03:00:02.169029
+2026-04-10 03:00:02,169 [INFO] ========================================
+2026-04-10 03:00:02,169 [INFO] --- Iniciando: Extender disponibilidad futura ---
+2026-04-10 03:00:05,038 [ERROR] --- ERROR en Extender disponibilidad futura: (psycopg2.errors.UndefinedColumn) column reservations.precio_total does not exist
+LINE 1: ...ns.tipo_ocupacion AS reservations_tipo_ocupacion, reservatio...
+                                                             ^
+
+[SQL: SELECT reservations.id AS reservations_id, reservations.hotel_id AS reservations_hotel_id, reservations.room_id AS reservations_room_id, reservations.guest_id AS reservations_guest_id, reservations.channel_id AS reservations_channel_id, reservations.group_id AS reservations_group_id, reservations.check_in AS reservations_check_in, reservations.check_out AS reservations_check_out, reservations.status AS reservations_status, reservations.notes AS reservations_notes, reservations.created_at AS reservations_created_at, reservations.updated_at AS reservations_updated_at, reservations.tipo_ocupacion AS reservations_tipo_ocupacion, reservations.precio_total AS reservations_precio_total, reservations.sena AS reservations_sena 
+FROM reservations 
+WHERE reservations.hotel_id = %(hotel_id_1)s AND reservations.status IN (%(status_1_1)s, %(status_1_2)s) AND reservations.check_in <= %(check_in_1)s AND reservations.check_out > %(check_out_1)s]
+[parameters: {'hotel_id_1': 1, 'check_in_1': datetime.date(2027, 3, 22), 'check_out_1': datetime.date(2027, 3, 22), 'status_1_1': 'confirmed', 'status_1_2': 'pending'}]
+(Background on this error at: https://sqlalche.me/e/20/f405) ---
+Traceback (most recent call last):
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedColumn: column reservations.precio_total does not exist
+LINE 1: ...ns.tipo_ocupacion AS reservations_tipo_ocupacion, reservatio...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\franc\hotel-system\scripts\cron_daily.py", line 37, in step
+    fn()
+    ~~^^
+  File "C:\Users\franc\hotel-system\scripts\cron_daily.py", line 45, in tarea_extender_disponibilidad
+    main()
+    ~~~~^^
+  File "C:\Users\franc\hotel-system\scripts\extend_availability.py", line 70, in main
+    rooms_data = get_availability(db, hotel_id, fecha)
+  File "C:\Users\franc\hotel-system\backend\services.py", line 38, in get_availability
+    .all()
+     ~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2704, in all
+    return self._iter().all()  # type: ignore
+           ~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2857, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2249, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self,
+        ^^^^^
+    ...<4 lines>...
+        conn,
+        ^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+        statement, params or {}, execution_options=execution_options
+    )
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1419, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 527, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2363, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.ProgrammingError: (psycopg2.errors.UndefinedColumn) column reservations.precio_total does not exist
+LINE 1: ...ns.tipo_ocupacion AS reservations_tipo_ocupacion, reservatio...
+                                                             ^
+
+[SQL: SELECT reservations.id AS reservations_id, reservations.hotel_id AS reservations_hotel_id, reservations.room_id AS reservations_room_id, reservations.guest_id AS reservations_guest_id, reservations.channel_id AS reservations_channel_id, reservations.group_id AS reservations_group_id, reservations.check_in AS reservations_check_in, reservations.check_out AS reservations_check_out, reservations.status AS reservations_status, reservations.notes AS reservations_notes, reservations.created_at AS reservations_created_at, reservations.updated_at AS reservations_updated_at, reservations.tipo_ocupacion AS reservations_tipo_ocupacion, reservations.precio_total AS reservations_precio_total, reservations.sena AS reservations_sena 
+FROM reservations 
+WHERE reservations.hotel_id = %(hotel_id_1)s AND reservations.status IN (%(status_1_1)s, %(status_1_2)s) AND reservations.check_in <= %(check_in_1)s AND reservations.check_out > %(check_out_1)s]
+[parameters: {'hotel_id_1': 1, 'check_in_1': datetime.date(2027, 3, 22), 'check_out_1': datetime.date(2027, 3, 22), 'status_1_1': 'confirmed', 'status_1_2': 'pending'}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2026-04-10 03:00:05,397 [INFO] --- Iniciando: Regenerar JSON semanal ---
+2026-04-10 03:00:05,397 [INFO] No es lunes — se omite regeneración completa.
+2026-04-10 03:00:05,411 [INFO] --- Completado: Regenerar JSON semanal ---
+2026-04-10 03:00:05,412 [INFO] ========================================
+2026-04-10 03:00:05,412 [INFO] Cron diario finalizado
+2026-04-10 03:00:05,412 [INFO] ========================================
+2026-04-17 03:00:02,795 [INFO] ========================================
+2026-04-17 03:00:02,796 [INFO] Cron diario iniciado: 2026-04-17 03:00:02.796556
+2026-04-17 03:00:02,796 [INFO] ========================================
+2026-04-17 03:00:02,797 [INFO] --- Iniciando: Extender disponibilidad futura ---
+2026-04-19 03:00:02,144 [INFO] ========================================
+2026-04-19 03:00:02,145 [INFO] Cron diario iniciado: 2026-04-19 03:00:02.145950
+2026-04-19 03:00:02,146 [INFO] ========================================
+2026-04-19 03:00:02,146 [INFO] --- Iniciando: Extender disponibilidad futura ---
+2026-04-19 03:00:05,811 [ERROR] --- ERROR en Extender disponibilidad futura: (psycopg2.errors.UndefinedColumn) column reservations.precio_total does not exist
+LINE 1: ...ns.tipo_ocupacion AS reservations_tipo_ocupacion, reservatio...
+                                                             ^
+
+[SQL: SELECT reservations.id AS reservations_id, reservations.hotel_id AS reservations_hotel_id, reservations.room_id AS reservations_room_id, reservations.guest_id AS reservations_guest_id, reservations.channel_id AS reservations_channel_id, reservations.group_id AS reservations_group_id, reservations.check_in AS reservations_check_in, reservations.check_out AS reservations_check_out, reservations.status AS reservations_status, reservations.notes AS reservations_notes, reservations.created_at AS reservations_created_at, reservations.updated_at AS reservations_updated_at, reservations.tipo_ocupacion AS reservations_tipo_ocupacion, reservations.precio_total AS reservations_precio_total, reservations.sena AS reservations_sena 
+FROM reservations 
+WHERE reservations.hotel_id = %(hotel_id_1)s AND reservations.status IN (%(status_1_1)s, %(status_1_2)s) AND reservations.check_in <= %(check_in_1)s AND reservations.check_out > %(check_out_1)s]
+[parameters: {'hotel_id_1': 1, 'check_in_1': datetime.date(2027, 3, 22), 'check_out_1': datetime.date(2027, 3, 22), 'status_1_1': 'confirmed', 'status_1_2': 'pending'}]
+(Background on this error at: https://sqlalche.me/e/20/f405) ---
+Traceback (most recent call last):
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedColumn: column reservations.precio_total does not exist
+LINE 1: ...ns.tipo_ocupacion AS reservations_tipo_ocupacion, reservatio...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\franc\hotel-system\scripts\cron_daily.py", line 37, in step
+    fn()
+    ~~^^
+  File "C:\Users\franc\hotel-system\scripts\cron_daily.py", line 45, in tarea_extender_disponibilidad
+    main()
+    ~~~~^^
+  File "C:\Users\franc\hotel-system\scripts\extend_availability.py", line 70, in main
+    rooms_data = get_availability(db, hotel_id, fecha)
+  File "C:\Users\franc\hotel-system\backend\services.py", line 38, in get_availability
+    .all()
+     ~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2704, in all
+    return self._iter().all()  # type: ignore
+           ~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2857, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2249, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self,
+        ^^^^^
+    ...<4 lines>...
+        conn,
+        ^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+        statement, params or {}, execution_options=execution_options
+    )
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1419, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 527, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2363, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.ProgrammingError: (psycopg2.errors.UndefinedColumn) column reservations.precio_total does not exist
+LINE 1: ...ns.tipo_ocupacion AS reservations_tipo_ocupacion, reservatio...
+                                                             ^
+
+[SQL: SELECT reservations.id AS reservations_id, reservations.hotel_id AS reservations_hotel_id, reservations.room_id AS reservations_room_id, reservations.guest_id AS reservations_guest_id, reservations.channel_id AS reservations_channel_id, reservations.group_id AS reservations_group_id, reservations.check_in AS reservations_check_in, reservations.check_out AS reservations_check_out, reservations.status AS reservations_status, reservations.notes AS reservations_notes, reservations.created_at AS reservations_created_at, reservations.updated_at AS reservations_updated_at, reservations.tipo_ocupacion AS reservations_tipo_ocupacion, reservations.precio_total AS reservations_precio_total, reservations.sena AS reservations_sena 
+FROM reservations 
+WHERE reservations.hotel_id = %(hotel_id_1)s AND reservations.status IN (%(status_1_1)s, %(status_1_2)s) AND reservations.check_in <= %(check_in_1)s AND reservations.check_out > %(check_out_1)s]
+[parameters: {'hotel_id_1': 1, 'check_in_1': datetime.date(2027, 3, 22), 'check_out_1': datetime.date(2027, 3, 22), 'status_1_1': 'confirmed', 'status_1_2': 'pending'}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2026-04-19 03:00:06,527 [INFO] --- Iniciando: Regenerar JSON semanal ---
+2026-04-19 03:00:06,527 [INFO] No es lunes — se omite regeneración completa.
+2026-04-19 03:00:06,528 [INFO] --- Completado: Regenerar JSON semanal ---
+2026-04-19 03:00:06,528 [INFO] ========================================
+2026-04-19 03:00:06,528 [INFO] Cron diario finalizado
+2026-04-19 03:00:06,528 [INFO] ========================================
+2026-04-20 03:00:02,125 [INFO] ========================================
+2026-04-20 03:00:02,125 [INFO] Cron diario iniciado: 2026-04-20 03:00:02.125962
+2026-04-20 03:00:02,126 [INFO] ========================================
+2026-04-20 03:00:02,126 [INFO] --- Iniciando: Extender disponibilidad futura ---
+2026-04-20 03:00:08,085 [ERROR] --- ERROR en Extender disponibilidad futura: (psycopg2.OperationalError) connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8) ---
+Traceback (most recent call last):
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\psycopg2\__init__.py", line 135, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+psycopg2.OperationalError: connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\franc\hotel-system\scripts\cron_daily.py", line 37, in step
+    fn()
+    ~~^^
+  File "C:\Users\franc\hotel-system\scripts\cron_daily.py", line 45, in tarea_extender_disponibilidad
+    main()
+    ~~~~^^
+  File "C:\Users\franc\hotel-system\scripts\extend_availability.py", line 70, in main
+    rooms_data = get_availability(db, hotel_id, fecha)
+  File "C:\Users\franc\hotel-system\backend\services.py", line 26, in get_availability
+    .all()
+     ~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2704, in all
+    return self._iter().all()  # type: ignore
+           ~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2857, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2239, in _execute_internal
+    conn = self._connection_for_bind(bind)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2108, in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in _connection_for_bind
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\state_changes.py", line 137, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 1187, in _connection_for_bind
+    conn = bind.connect()
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3293, in connect
+    return self._connection_cls(self)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 145, in __init__
+    Connection._handle_dbapi_exception_noconnection(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        err, dialect, engine
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2448, in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\psycopg2\__init__.py", line 135, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-04-20 03:00:08,314 [INFO] --- Iniciando: Regenerar JSON semanal ---
+2026-04-20 03:00:08,315 [INFO] Es lunes — regenerando JSON completo...
+2026-04-21 03:00:03,720 [INFO] ========================================
+2026-04-21 03:00:03,722 [INFO] Cron diario iniciado: 2026-04-21 03:00:03.722217
+2026-04-21 03:00:03,722 [INFO] ========================================
+2026-04-21 03:00:03,722 [INFO] --- Iniciando: Extender disponibilidad futura ---
+2026-04-21 03:00:14,189 [ERROR] --- ERROR en Extender disponibilidad futura: (psycopg2.OperationalError) connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8) ---
+Traceback (most recent call last):
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\psycopg2\__init__.py", line 135, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+psycopg2.OperationalError: connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\franc\hotel-system\scripts\cron_daily.py", line 37, in step
+    fn()
+    ~~^^
+  File "C:\Users\franc\hotel-system\scripts\cron_daily.py", line 45, in tarea_extender_disponibilidad
+    main()
+    ~~~~^^
+  File "C:\Users\franc\hotel-system\scripts\extend_availability.py", line 70, in main
+    rooms_data = get_availability(db, hotel_id, fecha)
+  File "C:\Users\franc\hotel-system\backend\services.py", line 23, in get_availability
+    .all()
+     ~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2704, in all
+    return self._iter().all()  # type: ignore
+           ~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2857, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2239, in _execute_internal
+    conn = self._connection_for_bind(bind)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2108, in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in _connection_for_bind
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\state_changes.py", line 137, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 1187, in _connection_for_bind
+    conn = bind.connect()
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3293, in connect
+    return self._connection_cls(self)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 145, in __init__
+    Connection._handle_dbapi_exception_noconnection(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        err, dialect, engine
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2448, in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\psycopg2\__init__.py", line 135, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-04-21 03:00:14,634 [INFO] --- Iniciando: Regenerar JSON semanal ---
+2026-04-21 03:00:14,635 [INFO] No es lunes — se omite regeneración completa.
+2026-04-21 03:00:14,636 [INFO] --- Completado: Regenerar JSON semanal ---
+2026-04-21 03:00:14,637 [INFO] ========================================
+2026-04-21 03:00:14,637 [INFO] Cron diario finalizado
+2026-04-21 03:00:14,637 [INFO] ========================================
+2026-04-22 03:00:02,729 [INFO] ========================================
+2026-04-22 03:00:02,729 [INFO] Cron diario iniciado: 2026-04-22 03:00:02.729523
+2026-04-22 03:00:02,729 [INFO] ========================================
+2026-04-22 03:00:02,729 [INFO] --- Iniciando: Extender disponibilidad futura ---
