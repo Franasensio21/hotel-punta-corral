@@ -20,6 +20,7 @@ export interface Habitacion {
 
 export interface HabitacionDisponible extends Habitacion {
   disponible: boolean
+  subtipo?: string | null
   origen?: string | null
   huesped?: string | null
   grupo?: string | null

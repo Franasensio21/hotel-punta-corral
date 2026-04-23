@@ -24,6 +24,7 @@ const ORIGEN_CONFIG: Record<string, { color: string; label: string; textColor: s
   direct:  { color: "#fb923c", label: "Directa", textColor: "#ffffff" },
   email:   { color: "#a855f7", label: "Gmail",   textColor: "#ffffff" },
   group:   { color: "#facc15", label: "Grupo",   textColor: "#1a1a1a" },
+  expedia: { color: "#e206ba", label: "Expedia", textColor: "#ffffff" },
   other:   { color: "#9ca3af", label: "Otro",    textColor: "#ffffff" },
 }
 
