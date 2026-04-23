@@ -1302,9 +1302,7 @@ export default function FinanzasPage() {
                         </TableCell>
                         <TableCell className="font-bold text-destructive">
                           ${totalGastosFiltrados.toLocaleString("es-AR")}
-                          {gastosFiltrados
-                            .reduce((acc, g) => acc + Number(g.monto), 0)
-                            .toLocaleString("es-AR")}
+                          
                         </TableCell>
                         <TableCell />
                       </TableRow>
