@@ -151,6 +151,7 @@ function GraficoTorta({
     const largeArc = fin - inicio > 0.5 ? 1 : 0;
     return `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
   }
+
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm font-semibold text-center">{titulo}</p>
@@ -229,6 +230,7 @@ export default function FinanzasPage() {
     notas: "",
   });
 
+  const [busquedaGasto, setBusquedaGasto] = useState<string>("");
   useEffect(() => {
     fetchData();
   }, [mes, anio]);
@@ -682,7 +684,16 @@ export default function FinanzasPage() {
         prev.includes(id) ? prev.filter((e) => e !== id) : [...prev, id],
       );
   }
-
+  
+  const gastosFiltrados = (gastos || []).filter((g: any) => {
+    const termino = (busquedaGasto || "").toLowerCase();
+    const descripcion = (g.descripcion || "").toLowerCase();
+    const categoria = (g.categoria || "").toLowerCase();
+    return descripcion.includes(termino) || categoria.includes(termino);
+  });
+  const totalGastosFiltrados = gastosFiltrados.reduce((acc: number, g: any) => {
+    return acc + Number(g.monto || 0);
+  }, 0);
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
@@ -1186,6 +1197,18 @@ export default function FinanzasPage() {
         </CardHeader>
         {expandGastos && (
           <CardContent>
+            {/* --- BARRA DE BUSQUEDA AGREGADA --- */}
+            {!loading && gastos.length > 0 && (
+              <div className="mb-4">
+                <Input
+                  placeholder="Buscar por descripción o categoría..."
+                  value={busquedaGasto}
+                  onChange={(e) => setBusquedaGasto(e.target.value)}
+                  className="max-w-sm"
+                />
+              </div>
+            )}
+
             {loading ? (
               <div className="flex flex-col gap-2">
                 {Array.from({ length: 3 }).map((_, i) => (
@@ -1197,81 +1220,98 @@ export default function FinanzasPage() {
                 No hay gastos cargados este mes
               </p>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead>Descripción</TableHead>
-                    <TableHead>Categoría</TableHead>
-                    <TableHead>Monto</TableHead>
-                    <TableHead className="w-[80px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {gastos.map((g) => (
-                    <TableRow key={g.id}>
-                      <TableCell className="text-sm">
-                        {format(new Date(g.fecha + "T12:00:00"), "dd/MM/yyyy")}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {g.descripcion}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          style={{
-                            backgroundColor:
-                              CATEGORIA_COLORES[g.categoria] || "#6b7280",
-                            color: "#fff",
-                          }}
-                          className="capitalize"
-                        >
-                          {g.categoria}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-semibold text-destructive">
-                        ${Number(g.monto).toLocaleString("es-AR")}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setGastoEditando(g);
-                              setFormEditar({
-                                fecha: g.fecha,
-                                descripcion: g.descripcion,
-                                monto: g.monto.toString(),
-                                categoria: g.categoria,
-                                notas: g.notas || "",
-                              });
-                              setModalEditarGasto(true);
-                            }}
-                          >
-                            <Pencil className="size-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEliminarGasto(g.id)}
-                          >
-                            <Trash2 className="size-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  <TableRow>
-                    <TableCell colSpan={3} className="font-bold text-right">
-                      Total
-                    </TableCell>
-                    <TableCell className="font-bold text-destructive">
-                      ${totalGastos.toLocaleString("es-AR")}
-                    </TableCell>
-                    <TableCell />
-                  </TableRow>
-                </TableBody>
-              </Table>
+              <>
+                {/* Si hay gastos pero el filtro no devuelve nada */}
+                {gastosFiltrados.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-6">
+                    No se encontraron resultados para "{busquedaGasto}"
+                  </p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Fecha</TableHead>
+                        <TableHead>Descripción</TableHead>
+                        <TableHead>Categoría</TableHead>
+                        <TableHead>Monto</TableHead>
+                        <TableHead className="w-[80px]"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {/* USAMOS EL ARRAY FILTRADO AQUÍ */}
+                      {gastosFiltrados.map((g) => (
+                        <TableRow key={g.id}>
+                          <TableCell className="text-sm">
+                            {format(
+                              new Date(g.fecha + "T12:00:00"),
+                              "dd/MM/yyyy",
+                            )}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {g.descripcion}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              style={{
+                                backgroundColor:
+                                  CATEGORIA_COLORES[g.categoria] || "#6b7280",
+                                color: "#fff",
+                              }}
+                              className="capitalize"
+                            >
+                              {g.categoria}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-semibold text-destructive">
+                            ${Number(g.monto).toLocaleString("es-AR")}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setGastoEditando(g);
+                                  setFormEditar({
+                                    fecha: g.fecha,
+                                    descripcion: g.descripcion,
+                                    monto: g.monto.toString(),
+                                    categoria: g.categoria,
+                                    notas: g.notas || "",
+                                  });
+                                  setModalEditarGasto(true);
+                                }}
+                              >
+                                <Pencil className="size-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEliminarGasto(g.id)}
+                              >
+                                <Trash2 className="size-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {/* FILA DE TOTAL DINÁMICA */}
+                      <TableRow>
+                        <TableCell colSpan={3} className="font-bold text-right">
+                          Total {busquedaGasto && "(filtrado)"}
+                        </TableCell>
+                        <TableCell className="font-bold text-destructive">
+                          ${totalGastosFiltrados.toLocaleString("es-AR")}
+                          {gastosFiltrados
+                            .reduce((acc, g) => acc + Number(g.monto), 0)
+                            .toLocaleString("es-AR")}
+                        </TableCell>
+                        <TableCell />
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                )}
+              </>
             )}
           </CardContent>
         )}

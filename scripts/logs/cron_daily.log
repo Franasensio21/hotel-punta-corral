@@ -4672,3 +4672,144 @@ connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection re
 2026-04-22 03:00:02,729 [INFO] Cron diario iniciado: 2026-04-22 03:00:02.729523
 2026-04-22 03:00:02,729 [INFO] ========================================
 2026-04-22 03:00:02,729 [INFO] --- Iniciando: Extender disponibilidad futura ---
+2026-04-23 03:23:18,811 [INFO] ========================================
+2026-04-23 03:23:18,812 [INFO] Cron diario iniciado: 2026-04-23 03:23:18.812911
+2026-04-23 03:23:18,813 [INFO] ========================================
+2026-04-23 03:23:18,813 [INFO] --- Iniciando: Extender disponibilidad futura ---
+2026-04-23 03:23:25,733 [ERROR] --- ERROR en Extender disponibilidad futura: (psycopg2.errors.UndefinedColumn) column reservations.precio_total does not exist
+LINE 1: ...ns.tipo_ocupacion AS reservations_tipo_ocupacion, reservatio...
+                                                             ^
+
+[SQL: SELECT reservations.id AS reservations_id, reservations.hotel_id AS reservations_hotel_id, reservations.room_id AS reservations_room_id, reservations.guest_id AS reservations_guest_id, reservations.channel_id AS reservations_channel_id, reservations.group_id AS reservations_group_id, reservations.check_in AS reservations_check_in, reservations.check_out AS reservations_check_out, reservations.status AS reservations_status, reservations.notes AS reservations_notes, reservations.created_at AS reservations_created_at, reservations.updated_at AS reservations_updated_at, reservations.tipo_ocupacion AS reservations_tipo_ocupacion, reservations.precio_total AS reservations_precio_total, reservations.sena AS reservations_sena 
+FROM reservations 
+WHERE reservations.hotel_id = %(hotel_id_1)s AND reservations.status IN (%(status_1_1)s, %(status_1_2)s) AND reservations.check_in <= %(check_in_1)s AND reservations.check_out > %(check_out_1)s]
+[parameters: {'hotel_id_1': 1, 'check_in_1': datetime.date(2027, 3, 22), 'check_out_1': datetime.date(2027, 3, 22), 'status_1_1': 'confirmed', 'status_1_2': 'pending'}]
+(Background on this error at: https://sqlalche.me/e/20/f405) ---
+Traceback (most recent call last):
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedColumn: column reservations.precio_total does not exist
+LINE 1: ...ns.tipo_ocupacion AS reservations_tipo_ocupacion, reservatio...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\franc\hotel-system\scripts\cron_daily.py", line 37, in step
+    fn()
+    ~~^^
+  File "C:\Users\franc\hotel-system\scripts\cron_daily.py", line 45, in tarea_extender_disponibilidad
+    main()
+    ~~~~^^
+  File "C:\Users\franc\hotel-system\scripts\extend_availability.py", line 70, in main
+    rooms_data = get_availability(db, hotel_id, fecha)
+  File "C:\Users\franc\hotel-system\backend\services.py", line 34, in get_availability
+    .all()
+     ~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2704, in all
+    return self._iter().all()  # type: ignore
+           ~~~~~~~~~~^^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2857, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2249, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self,
+        ^^^^^
+    ...<4 lines>...
+        conn,
+        ^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\orm\context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+        statement, params or {}, execution_options=execution_options
+    )
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1419, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 527, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2363, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\franc\hotel-system\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.ProgrammingError: (psycopg2.errors.UndefinedColumn) column reservations.precio_total does not exist
+LINE 1: ...ns.tipo_ocupacion AS reservations_tipo_ocupacion, reservatio...
+                                                             ^
+
+[SQL: SELECT reservations.id AS reservations_id, reservations.hotel_id AS reservations_hotel_id, reservations.room_id AS reservations_room_id, reservations.guest_id AS reservations_guest_id, reservations.channel_id AS reservations_channel_id, reservations.group_id AS reservations_group_id, reservations.check_in AS reservations_check_in, reservations.check_out AS reservations_check_out, reservations.status AS reservations_status, reservations.notes AS reservations_notes, reservations.created_at AS reservations_created_at, reservations.updated_at AS reservations_updated_at, reservations.tipo_ocupacion AS reservations_tipo_ocupacion, reservations.precio_total AS reservations_precio_total, reservations.sena AS reservations_sena 
+FROM reservations 
+WHERE reservations.hotel_id = %(hotel_id_1)s AND reservations.status IN (%(status_1_1)s, %(status_1_2)s) AND reservations.check_in <= %(check_in_1)s AND reservations.check_out > %(check_out_1)s]
+[parameters: {'hotel_id_1': 1, 'check_in_1': datetime.date(2027, 3, 22), 'check_out_1': datetime.date(2027, 3, 22), 'status_1_1': 'confirmed', 'status_1_2': 'pending'}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2026-04-23 03:23:26,587 [INFO] --- Iniciando: Regenerar JSON semanal ---
+2026-04-23 03:23:26,587 [INFO] No es lunes — se omite regeneración completa.
+2026-04-23 03:23:26,647 [INFO] --- Completado: Regenerar JSON semanal ---
+2026-04-23 03:23:26,647 [INFO] ========================================
+2026-04-23 03:23:26,647 [INFO] Cron diario finalizado
+2026-04-23 03:23:26,647 [INFO] ========================================
