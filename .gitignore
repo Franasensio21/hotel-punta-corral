@@ -16,4 +16,6 @@ email-bot/credentials.json
 
 # Base de datos
 *.sqlite
-*.dbbackend/venv/ 
+*.db
+# Backend venv
+backend/venv/ 
