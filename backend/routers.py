@@ -1142,7 +1142,32 @@ def get_grupo_habitaciones(grupo_id: int, hotel_id: int = Depends(get_hotel_id),
           AND r.status != 'cancelled'
         ORDER BY CAST(ro.number AS INTEGER)
     """), {"grupo_id": grupo_id, "hotel_id": hotel_id}).fetchall()
-    return [dict(r._mapping) for r in result]
+
+    # Traer overrides vigentes para el rango del grupo
+    grupo = db.execute(text("SELECT arrival_date, departure_date FROM groups WHERE id = :id"),
+                       {"id": grupo_id}).fetchone()
+
+    overrides_by_room = {}
+    if grupo:
+        overrides = db.execute(text("""
+            SELECT room_id, tipo_override, subtipo_override, capacidad_override
+            FROM habitaciones_override
+            WHERE hotel_id = :hotel_id
+              AND fecha_desde <= :hasta
+              AND fecha_hasta >= :desde
+        """), {"hotel_id": hotel_id, "desde": grupo.arrival_date, "hasta": grupo.departure_date}).fetchall()
+        overrides_by_room = {o.room_id: o for o in overrides}
+
+    rows = []
+    for r in result:
+        row = dict(r._mapping)
+        ov = overrides_by_room.get(row["room_id"])
+        if ov:
+            if ov.tipo_override:     row["tipo"]      = ov.tipo_override
+            if ov.subtipo_override:  row["subtipo"]   = ov.subtipo_override
+            if ov.capacidad_override: row["capacidad"] = ov.capacidad_override
+        rows.append(row)
+    return rows
 
 
 @router.post("/grupos/{grupo_id}/habitaciones", status_code=201, tags=["Grupos"])
